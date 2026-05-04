@@ -4,8 +4,6 @@
     # SPA Routing
     try_files {path} /index.html
 
-    # Proxy API requests to the backend container
-    handle_path /api/* {
-        reverse_proxy tool_app:3001
-    }
+    # Proxy API requests without stripping /api
+    reverse_proxy /api/* tool_app:3001
 }

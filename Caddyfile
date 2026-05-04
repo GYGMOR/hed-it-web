@@ -1,9 +1,14 @@
 :80 {
     root * /usr/share/caddy
-    file_server
-    # SPA Routing
-    try_files {path} /index.html
 
-    # Proxy API requests without stripping /api
-    reverse_proxy /api/* tool_app:3001
+    # Das erzwingt die Weiterleitung zum Backend
+    route /api/* {
+        reverse_proxy tool_app:3001
+    }
+
+    # Alles andere ist für die Webseite (Bilder, Seiten, etc.)
+    handle {
+        file_server
+        try_files {path} /index.html
+    }
 }

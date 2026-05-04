@@ -12,6 +12,9 @@ import Contact from './pages/Contact';
 import Legal from './pages/Legal';
 import Configurator from './pages/Configurator';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import PortalLayout from './pages/portal/PortalLayout';
 import Dashboard from './pages/portal/Dashboard';
 import Contracts from './pages/portal/Contracts';
@@ -55,6 +58,9 @@ function App() {
               <Route path="/configurator" element={<Configurator />} />
               <Route path="/services" element={<Services />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Portal Routes */}
               <Route element={<ProtectedRoute />}>

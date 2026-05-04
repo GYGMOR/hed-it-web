@@ -126,6 +126,9 @@ const Login = () => {
                     required
                   />
                 </div>
+                <div style={{ textAlign: 'right', marginBottom: '24px', marginTop: '-12px' }}>
+                  <Link to="/forgot-password" style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Passwort vergessen?</Link>
+                </div>
                 <button className="btn btn-primary w-full" disabled={isLoading} style={{ marginTop: '12px' }}>
                   {isLoading ? <Loader2 className="animate-spin" /> : 'Anmelden'} <ArrowRight size={20} />
                 </button>
@@ -174,7 +177,7 @@ const Login = () => {
 
         <div className="text-center mt-8">
           <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-            Noch kein Konto? <Link to="/contact" className="nav-link" style={{ color: 'var(--primary)' }}>Kontaktieren Sie uns</Link>
+            Noch kein Konto? <Link to="/register" className="nav-link" style={{ color: 'var(--primary)' }}>Jetzt registrieren</Link>
           </p>
         </div>
       </div>

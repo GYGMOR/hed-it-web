@@ -1,0 +1,11 @@
+:80 {
+    root * /usr/share/caddy
+    file_server
+    # SPA Routing
+    try_files {path} /index.html
+
+    # Proxy API requests to the backend container
+    handle_path /api/* {
+        reverse_proxy tool_app:3001
+    }
+}

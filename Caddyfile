@@ -1,12 +1,12 @@
 :80 {
     root * /usr/share/caddy
 
-    # Das erzwingt die Weiterleitung zum Backend
-    route /api/* {
-        reverse_proxy tool_app:3001
+    # API Weiterleitung
+    handle /api/* {
+        reverse_proxy app:3001
     }
 
-    # Alles andere ist für die Webseite (Bilder, Seiten, etc.)
+    # Alles andere (Webseite)
     handle {
         file_server
         try_files {path} /index.html

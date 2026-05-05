@@ -16,6 +16,7 @@ const Register = () => {
   const [companyName, setCompanyName] = useState('');
   const [domain, setDomain] = useState('');
   const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
   
   const navigate = useNavigate();
 
@@ -39,6 +40,7 @@ const Register = () => {
           password, 
           firstName, 
           lastName, 
+          phone,
           companyName,
           domain,
           address,
@@ -149,6 +151,17 @@ const Register = () => {
                     placeholder="name@firma.ch" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Telefonnummer</label>
+                  <input 
+                    type="tel" 
+                    placeholder="+41 79 123 45 67" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
                   />
                 </div>

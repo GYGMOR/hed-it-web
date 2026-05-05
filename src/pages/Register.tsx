@@ -12,6 +12,10 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [step, setStep] = useState(1);
+  const [companyName, setCompanyName] = useState('');
+  const [domain, setDomain] = useState('');
+  const [address, setAddress] = useState('');
   
   const navigate = useNavigate();
 
@@ -35,6 +39,9 @@ const Register = () => {
           password, 
           firstName, 
           lastName, 
+          companyName,
+          domain,
+          address,
           botVerificationChecked: true 
         })
       });
@@ -97,66 +104,121 @@ const Register = () => {
             </motion.div>
           )}
 
-          <form onSubmit={handleRegisterSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="input-group">
-                <label><User size={16} /> Vorname</label>
-                <input 
-                  type="text" 
-                  placeholder="Max" 
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="input-group">
-                <label><User size={16} /> Nachname</label>
-                <input 
-                  type="text" 
-                  placeholder="Mustermann" 
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (step === 1) {
+              if (password !== confirmPassword) {
+                setError('Passwörter stimmen nicht überein.');
+                return;
+              }
+              setError(null);
+              setStep(2);
+            } else {
+              handleRegisterSubmit(e);
+            }
+          }}>
+            {step === 1 ? (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="input-group">
+                    <label><User size={16} /> Vorname</label>
+                    <input 
+                      type="text" 
+                      placeholder="Max" 
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label><User size={16} /> Nachname</label>
+                    <input 
+                      type="text" 
+                      placeholder="Mustermann" 
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="input-group">
-              <label><Mail size={16} /> E-Mail Adresse</label>
-              <input 
-                type="email" 
-                placeholder="name@firma.ch" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+                <div className="input-group">
+                  <label><Mail size={16} /> E-Mail Adresse</label>
+                  <input 
+                    type="email" 
+                    placeholder="name@firma.ch" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
 
-            <div className="input-group">
-              <label><Lock size={16} /> Passwort</label>
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+                <div className="input-group">
+                  <label><Lock size={16} /> Passwort</label>
+                  <input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
 
-            <div className="input-group">
-              <label><Lock size={16} /> Passwort bestätigen</label>
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
+                <div className="input-group">
+                  <label><Lock size={16} /> Passwort bestätigen</label>
+                  <input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
 
-            <button className="btn btn-primary w-full" disabled={isLoading} style={{ marginTop: '12px' }}>
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Jetzt registrieren'} <ArrowRight size={20} />
-            </button>
+                <button type="submit" className="btn btn-primary w-full" style={{ marginTop: '12px' }}>
+                  Weiter <ArrowRight size={20} />
+                </button>
+              </>
+            ) : (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <div className="input-group">
+                  <label>Firmenname (Optional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Muster GmbH" 
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Webseite / Domain (Optional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="www.muster.ch" 
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Adresse (Optional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Musterstrasse 1, 8000 Zürich" 
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setStep(1)}>
+                    Zurück
+                  </button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isLoading}>
+                    {isLoading ? <Loader2 className="animate-spin" /> : 'Jetzt registrieren'} <ArrowRight size={20} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </form>
 
           <div className="text-center mt-6">

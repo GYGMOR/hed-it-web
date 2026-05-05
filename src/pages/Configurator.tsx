@@ -35,6 +35,11 @@ const Configurator = () => {
   const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadFirstName, setLeadFirstName] = useState('');
+  const [leadLastName, setLeadLastName] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadPhone, setLeadPhone] = useState('');
 
   const shakeAnimation = {
     x: [0, -10, 10, -10, 10, 0],
@@ -185,6 +190,11 @@ const Configurator = () => {
       Domain: ${domain || 'Keine'}
       Zusatz-Services: ${Array.from(selectedOptions).map(id => CONFIG_OPTIONS.find(o => o.id === id)?.name).join(', ')}
       Total Schätzung: CHF ${calculatorData.total?.toLocaleString() || 0}
+      ---
+      Kontaktdaten:
+      Name: ${leadFirstName} ${leadLastName}
+      Email: ${leadEmail}
+      Telefon: ${leadPhone || 'Nicht angegeben'}
     `.trim();
 
     try {
@@ -372,19 +382,42 @@ const Configurator = () => {
                 )}
 
                 <div className="final-actions">
-                  <button 
-                    className={`btn btn-primary w-full ${isSuccess ? 'success' : ''}`}
-                    disabled={isSending || isSuccess}
-                    onClick={handleSubmit}
-                  >
-                    {isSending ? (
-                      <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Sendet...</>
-                    ) : isSuccess ? (
-                      <><Check className="w-5 h-5 mr-2" /> Anfrage gesendet!</>
-                    ) : (
-                      <><Send className="w-5 h-5 mr-2" /> Anfrage senden</>
-                    )}
-                  </button>
+                  {!showLeadForm ? (
+                    <button 
+                      className="btn btn-primary w-full"
+                      onClick={() => setShowLeadForm(true)}
+                    >
+                      Weiter <ArrowRight className="w-5 h-5 ml-2" />
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>Ihre Kontaktdaten</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <input type="text" placeholder="Vorname" value={leadFirstName} onChange={e => setLeadFirstName(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
+                        <input type="text" placeholder="Nachname" value={leadLastName} onChange={e => setLeadLastName(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
+                      </div>
+                      <input type="email" placeholder="E-Mail Adresse" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
+                      <input type="tel" placeholder="Telefon (Optional)" value={leadPhone} onChange={e => setLeadPhone(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
+                      
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                        <button className="btn btn-secondary" onClick={() => setShowLeadForm(false)}>Zurück</button>
+                        <button 
+                          className={`btn btn-primary w-full ${isSuccess ? 'success' : ''}`}
+                          disabled={isSending || isSuccess || !leadFirstName || !leadLastName || !leadEmail}
+                          onClick={handleSubmit}
+                          style={{ flex: 1 }}
+                        >
+                          {isSending ? (
+                            <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Sendet...</>
+                          ) : isSuccess ? (
+                            <><Check className="w-5 h-5 mr-2" /> Gesendet!</>
+                          ) : (
+                            <><Send className="w-5 h-5 mr-2" /> Verbindlich anfragen</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   
                   {isSuccess && (
                     <button 
@@ -401,9 +434,11 @@ const Configurator = () => {
                   )}
                 </div>
                 
-                <p className="disclaimer">
-                  Mit dem Absenden der Anfrage akzeptieren Sie unsere AGB. Wir werden uns innerhalb von 24h bei Ihnen melden.
-                </p>
+                {!showLeadForm && (
+                  <p className="disclaimer">
+                    Mit dem Absenden der Anfrage akzeptieren Sie unsere AGB. Wir werden uns innerhalb von 24h bei Ihnen melden.
+                  </p>
+                )}
               </div>
             </aside>
           </div>

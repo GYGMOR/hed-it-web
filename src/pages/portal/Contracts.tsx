@@ -227,7 +227,7 @@ const Contracts = () => {
                   {ALL_UPGRADES.map((up) => (
                     <div 
                       key={up.id} 
-                      className={`upgrade-item ${contracts.some(c => c.title.includes(up.name)) ? 'disabled' : ''}`}
+                      className={`upgrade-item ${contracts.some(c => c && (c.title || c.name || '').includes(up.name)) ? 'disabled' : ''}`}
                       onClick={() => setSelectedUpgradeId(up.id)}
                     >
                       <div className="up-icon-box">{up.icon}</div>

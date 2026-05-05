@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   CheckCircle2, 
   Clock, 
@@ -12,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const stats = [
     { label: 'Aktive Verträge', value: '2', icon: <CheckCircle2 className="text-success" />, trend: '+1 neu' },
@@ -49,7 +51,7 @@ const Dashboard = () => {
         <section className="dashboard-section main-section">
           <div className="section-header">
             <h3>Letzte Aktivitäten</h3>
-            <button className="btn-text">Alle ansehen <ArrowUpRight size={16} /></button>
+            <button className="btn-text" onClick={() => navigate('/portal/tickets')}>Alle ansehen <ArrowUpRight size={16} /></button>
           </div>
           <div className="activity-list">
             {[
@@ -89,7 +91,7 @@ const Dashboard = () => {
           </div>
           <div className="support-cta">
             <p>Probleme mit einem Service?</p>
-            <button className="btn btn-outline w-full mt-2" style={{ padding: '10px' }}>Support kontaktieren</button>
+            <button className="btn btn-outline w-full mt-2" style={{ padding: '10px' }} onClick={() => navigate('/portal/tickets?new=true')}>Support kontaktieren</button>
           </div>
         </aside>
       </div>

@@ -99,7 +99,7 @@ const Contracts = () => {
   };
 
   const availableUpgrades = ALL_UPGRADES.filter(up => 
-    !contracts.some(c => (c.name || c.title || '').toLowerCase().includes(up.name.toLowerCase().split(' ')[0].toLowerCase()))
+    !contracts.some(c => c && (c.name || c.title || '').toLowerCase().includes((up.name || '').toLowerCase().split(' ')[0].toLowerCase()))
   );
 
   const selectedUpgrade = ALL_UPGRADES.find(u => u.id === selectedUpgradeId);

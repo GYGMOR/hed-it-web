@@ -204,9 +204,16 @@ const Configurator = () => {
       formData.append('customer', calculatorData.clientType || 'Web-Besucher');
       formData.append('pdf', pdfBlob, `anfrage-${domain || 'projekt'}.pdf`);
 
-      // 3. Send to ERD Tool (using local dev port as default)
+      // 3. Send to ERD Tool (with auth if logged in)
+      const token = localStorage.getItem('token');
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/public/inquiry', {
         method: 'POST',
+        headers: headers,
         body: formData
       });
 

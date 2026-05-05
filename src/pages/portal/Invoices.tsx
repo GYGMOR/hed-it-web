@@ -14,10 +14,11 @@ import { useAuth } from '../../context/AuthContext';
 interface Invoice {
   id: string;
   invoice_number: string;
-  status: 'paid' | 'unpaid' | 'overdue' | 'draft';
-  total_amount: number;
+  status: 'paid' | 'open' | 'overdue' | 'sent';
+  amount: number;
   due_date: string;
   created_at: string;
+  title: string;
 }
 
 const Invoices = () => {
@@ -26,11 +27,11 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('/api/invoices', {
+      const response = await fetch('/api/portal/invoices', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      if (data.success) setInvoices(data.data);
+      if (data.success) setInvoices(data.data || []);
     } catch (err) {
       console.error('Failed to fetch invoices');
     }
@@ -64,18 +65,35 @@ const Invoices = () => {
           <tbody>
             {invoices.length > 0 ? invoices.map((inv) => (
               <tr key={inv.id}>
-                <td className="inv-num"><FileText size={16} /> {inv.invoice_number}</td>
+                <td className="inv-num"><FileText size={16} /> {inv.invoice_number || `RE-${inv.id.substring(0,4).toUpperCase()}`}</td>
                 <td>{new Date(inv.created_at).toLocaleDateString()}</td>
-                <td>{new Date(inv.due_date).toLocaleDateString()}</td>
-                <td className="inv-amount">{inv.total_amount.toFixed(2)} chf</td>
+                <td>{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '-'}</td>
+                <td className="inv-amount">{parseFloat(String(inv.amount || 0)).toFixed(2)} chf</td>
                 <td>
                   <span className={`status-pill ${inv.status}`}>
                     {inv.status === 'paid' ? <CheckCircle2 size={14} /> : inv.status === 'overdue' ? <AlertCircle size={14} /> : <Clock size={14} />}
-                    {inv.status}
+                    {inv.status === 'open' || inv.status === 'sent' ? 'Offen' : inv.status}
                   </span>
                 </td>
                 <td>
-                  <button className="btn-icon-small"><Download size={16} /></button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button 
+                      className="btn-icon-small" 
+                      title="Rechnung PDF"
+                      onClick={() => window.open(`/api/invoices/${inv.id}/pdf`, '_blank')}
+                    >
+                      <Download size={16} />
+                    </button>
+                    {(inv.status === 'open' || inv.status === 'sent') && (
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ padding: '6px 12px', fontSize: 11, height: 'auto' }}
+                        onClick={() => alert('Demo-Zahlung wird gestartet (TWINT / Apple Pay)...')}
+                      >
+                        Bezahlen
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )) : (

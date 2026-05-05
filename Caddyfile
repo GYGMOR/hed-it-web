@@ -6,6 +6,11 @@
         reverse_proxy app:3001
     }
 
+    # Uploads Weiterleitung
+    handle /uploads/* {
+        reverse_proxy app:3001
+    }
+
     # Alles andere (Webseite)
     handle {
         file_server

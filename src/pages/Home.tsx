@@ -120,8 +120,8 @@ const Home = () => {
 
       {/* --- Why hed-it Section --- */}
       <section className="section about-section">
-        <div className="container">
-          <div className="hero-grid">
+        <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ maxWidth: '800px' }}>
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -151,26 +151,6 @@ const Home = () => {
                     <li className="flex gap-4 items-center" style={{ fontSize: '17px', fontWeight: 600 }}><Zap size={22} color="var(--primary)" /> 100% Individualität statt Standard-Lösungen</li>
                  </ul>
               </div>
-            </motion.div>
- 
-             <motion.div 
-              className="ceo-visual"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1 }}
-            >
-               <div className="ceo-card">
-                 <img 
-                   src="/portre/joel.hediger.jpeg" 
-                   alt="Joel Hediger" 
-                 />
-                 <div className="ceo-info">
-                    <h3 className="premium-gradient">Joel Hediger</h3>
-                    <p>Inhaber & Experte</p>
-                 </div>
-               </div>
-               <div className="glow-effect" />
             </motion.div>
           </div>
         </div>

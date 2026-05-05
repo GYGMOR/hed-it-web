@@ -632,3 +632,125 @@ h1, h2, h3, h4 {
     }
   }
 }
+
+// --- Reference Cards ---
+.reference-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 32px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-10px);
+    border-color: var(--primary);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+    
+    .reference-image img {
+      transform: scale(1.05);
+    }
+  }
+
+  .reference-image {
+    width: 100%;
+    height: 220px; // Default for mobile
+    overflow: hidden;
+    position: relative;
+
+    @media (min-width: 768px) {
+      height: 300px; // Larger for desktop
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s ease;
+    }
+    
+    .reference-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6));
+      display: flex;
+      align-items: flex-end;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+  }
+
+  &:hover .reference-overlay {
+    opacity: 1;
+  }
+
+  .reference-content {
+    padding: 32px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .reference-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ref-tag {
+      padding: 6px 14px;
+      background: rgba(0, 242, 255, 0.1);
+      border: 1px solid rgba(0, 242, 255, 0.2);
+      color: var(--primary);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ref-customer {
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .ref-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .ref-desc {
+      color: var(--text-muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .btn-visit {
+      margin-top: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: var(--primary);
+        color: black;
+        border-color: var(--primary);
+      }
+    }
+  }
+}

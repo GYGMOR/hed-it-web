@@ -1,12 +1,45 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { ExternalLink, LayoutGrid, Calculator, MessageSquare, Phone } from 'lucide-react';
 
 const References = () => {
   const projects = [
-    { title: "E-Commerce Re-Design", category: "Webentwicklung", desc: "Kompletter Relaunch eines Schweizer Modehauses inkl. ERP-Schnittstelle.", img: "/hero-visual.png" },
-    { title: "Cloud Migration 2.0", category: "Infrastructure", desc: "Vollständige Migration einer Anwaltskanzlei in die Hetzner Cloud.", img: "/hero-visual.png" },
-    { title: "B2B Bestellportal", category: "Custom App", desc: "Individuelle Web-Applikation zur Automatisierung von Bestellprozessen.", img: "/hero-visual.png" },
-    { title: "Managed IT Setup", category: "Support", desc: "Komplettes IT-Outsourcing für ein mittelständisches Industrieunternehmen.", img: "/hero-visual.png" }
+    { 
+      title: "Exklusiver Online-Weinshop", 
+      customer: "Vierkorken",
+      category: "E-Commerce", 
+      tags: ["Webdesign", "Frontend", "React"],
+      desc: "Individueller E-Commerce-Shop mit Fokus auf Premium-Weine und automatisierte Lagerverwaltung.", 
+      img: "/referenzen/vierkorken.png",
+      url: "https://vierkorken.ch"
+    },
+    { 
+      title: "Moderne Metallbau-Präsenz", 
+      customer: "Metallwerk",
+      category: "Webdesign", 
+      tags: ["Webdesign", "Portfolio", "SEO"],
+      desc: "Präsentation von anspruchsvollen Metallbau-Projekten mit Fokus auf Design und technische Exzellenz.", 
+      img: "/referenzen/metallwerk-swiss.png",
+      url: "https://gygmor.github.io/Metallwerk/"
+    },
+    { 
+      title: "Traditionelle Handwerkskunst", 
+      customer: "Käserei Seetal",
+      category: "Webentwicklung", 
+      tags: ["Webentwicklung", "Local SEO", "CMS"],
+      desc: "Digitale Präsenz für eine traditionelle Schweizer Käserei zur Bewerbung regionaler Produkte.", 
+      img: "/referenzen/kaeserei-seetal.png",
+      url: "https://gygmor.github.io/kaeserei-seetal/"
+    },
+    { 
+      title: "Professionelle Reinigungssysteme", 
+      customer: "Baumann Reinigungssysteme",
+      category: "Frontend", 
+      tags: ["Frontend", "UX/UI", "Service App"],
+      desc: "Moderne Webseite für einen Reinigungsbetrieb mit interaktivem Buchungsformular und Leistungsübersicht.", 
+      img: "/referenzen/bamann.png",
+      url: "https://gygmor.github.io/clean-flow/"
+    }
   ];
 
   return (
@@ -14,28 +47,46 @@ const References = () => {
       <section className="hero">
         <div className="container text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <span className="hero-tag">Portfolio</span>
             <h1 className="hero-title">Unsere <span className="premium-gradient">Referenzen</span></h1>
-            <p className="hero-desc" style={{ margin: '0 auto' }}>Erfolgsgeschichten, die für sich sprechen.</p>
+            <p className="hero-desc" style={{ margin: '0 auto' }}>Wir verwandeln Visionen in digitale Realität. Entdecken Sie eine Auswahl unserer neuesten Projekte.</p>
           </motion.div>
         </div>
       </section>
 
       <section className="section section-dark">
         <div className="container">
-          <div className="items-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))' }}>
+          <div className="items-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
             {projects.map((p, i) => (
               <motion.div 
                 key={i} 
-                className="hero-visual" 
-                style={{ borderRadius: '24px', overflow: 'hidden' }}
-                whileHover={{ scale: 1.02 }}
+                className="reference-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
               >
-                <div style={{ padding: '32px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>{p.category}</span>
-                  <h3 style={{ margin: '8px 0 16px' }}>{p.title}</h3>
-                  <p className="item-desc">{p.desc}</p>
+                <div className="reference-image">
+                  <img src={p.img} alt={p.title} />
+                  <div className="reference-overlay">
+                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-visit">
+                      Zur Webseite <ExternalLink size={16} />
+                    </a>
+                  </div>
                 </div>
-                <img src={p.img} alt={p.title} style={{ height: '300px', width: '100%', objectFit: 'cover', opacity: 0.8 }} />
+                
+                <div className="reference-content">
+                  <div className="reference-tags">
+                    {p.tags.map(tag => <span key={tag} className="ref-tag">{tag}</span>)}
+                  </div>
+                  <span className="ref-customer">Kunde: {p.customer}</span>
+                  <h3 className="ref-title">{p.title}</h3>
+                  <p className="ref-desc">{p.desc}</p>
+                  
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-visit lg-hidden">
+                    Projekt ansehen <ExternalLink size={16} />
+                  </a>
+                </div>
               </motion.div>
             ))}
           </div>

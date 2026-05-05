@@ -20,13 +20,16 @@ import { useAuth } from '../../context/AuthContext';
 
 interface Contract {
   id: string;
-  contract_number: string;
-  title: string;
+  contract_number?: string;
+  name?: string;
+  title?: string;
   status: 'active' | 'expired' | 'pending';
-  start_date: string;
-  end_date?: string;
-  monthly_value: string | number;
+  date: string;
+  monthly_value?: string | number;
   payment_cycle?: string;
+  source: 'contract' | 'file';
+  path?: string;
+  type?: string;
 }
 
 const ALL_UPGRADES = [
@@ -134,32 +137,52 @@ const Contracts = () => {
               whileHover={{ translateY: -4 }}
             >
               <div className="contract-header">
-                <div className="contract-icon">
+                <div className="contract-icon" style={{ backgroundColor: contract.source === 'file' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 242, 255, 0.1)', color: contract.source === 'file' ? '#ef4444' : 'var(--primary)' }}>
                   <FileText size={24} />
                 </div>
-                <span className={`status-badge ${contract.status}`}>{contract.status}</span>
+                <span className={`status-badge ${contract.status}`}>{contract.source === 'file' ? 'Dokument' : contract.status}</span>
               </div>
               <div className="contract-body">
-                <h3>{contract.title}</h3>
-                <p className="contract-num">{contract.contract_number || 'CON-' + contract.id.substring(0, 8).toUpperCase()}</p>
+                <h3 style={{ fontSize: 18 }}>{contract.name || contract.title}</h3>
+                <p className="contract-num">{contract.source === 'file' ? 'Hochgeladenes Dokument' : (contract.contract_number || 'CON-' + contract.id.substring(0, 8).toUpperCase())}</p>
                 
                 <div className="contract-info">
                   <div className="info-row">
                     <Calendar size={14} />
-                    <span>Seit: {new Date(contract.start_date).toLocaleDateString('de-CH')}</span>
+                    <span>Datum: {new Date(contract.date).toLocaleDateString('de-CH')}</span>
                   </div>
-                  <div className="info-row">
-                    <Globe size={14} />
-                    <span>Abrechnung: {contract.payment_cycle || 'Monatlich'}</span>
-                  </div>
+                  {contract.source === 'contract' && (
+                    <div className="info-row">
+                      <Globe size={14} />
+                      <span>Abrechnung: {contract.payment_cycle || 'Monatlich'}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="contract-footer">
                 <div className="price-tag">
-                  <span className="price">{Number(contract.monthly_value).toFixed(2)} chf</span>
-                  <span className="freq">/Monat</span>
+                  {contract.source === 'contract' ? (
+                    <>
+                      <span className="price">{Number(contract.monthly_value || 0).toFixed(2)} chf</span>
+                      <span className="freq">/Monat</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>PDF Dokument</span>
+                  )}
                 </div>
-                <button className="btn-icon"><Download size={18} /></button>
+                <button 
+                  className="btn-icon"
+                  onClick={() => {
+                    if (contract.source === 'file' && contract.path) {
+                      window.open(contract.path, '_blank');
+                    } else {
+                      // Original logic for generated contract PDFs if exists
+                      alert('Vertrags-PDF wird generiert...');
+                    }
+                  }}
+                >
+                  <Download size={18} />
+                </button>
               </div>
             </motion.div>
           ))}

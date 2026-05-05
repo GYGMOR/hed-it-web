@@ -148,7 +148,7 @@ const Home = () => {
               </div>
             </div>
 
-            <motion.div 
+             <motion.div 
               className="ceo-visual"
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -157,20 +157,38 @@ const Home = () => {
             >
                <div style={{ 
                  width: '100%', 
-                 height: '600px', 
+                 height: '650px', 
                  background: 'var(--bg-card)', 
                  borderRadius: '40px', 
-                 border: '2px solid var(--primary)',
+                 border: '1px solid var(--border)',
                  display: 'flex',
                  alignItems: 'center',
                  justifyContent: 'center',
                  overflow: 'hidden',
-                 boxShadow: '0 50px 100px rgba(0,0,0,0.4)'
+                 boxShadow: '0 50px 100px rgba(0,0,0,0.4)',
+                 position: 'relative'
                }}>
-                 <div className="text-center">
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '10px' }}>Platzhalter für CEO Foto</p>
-                    <h3 className="premium-gradient">Joel Hediger</h3>
-                    <p style={{ fontSize: '14px', opacity: 0.5 }}>Inhaber & Experte</p>
+                 <img 
+                   src="/portre/joel.hediger.jpeg" 
+                   alt="Joel Hediger" 
+                   style={{ 
+                     width: '100%', 
+                     height: '100%', 
+                     objectFit: 'cover',
+                     filter: 'contrast(1.05)' 
+                   }} 
+                 />
+                 <div style={{
+                   position: 'absolute',
+                   bottom: 0,
+                   left: 0,
+                   right: 0,
+                   padding: '40px',
+                   background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                   color: 'white'
+                 }}>
+                    <h3 className="premium-gradient" style={{ margin: 0, fontSize: '32px' }}>Joel Hediger</h3>
+                    <p style={{ fontSize: '16px', opacity: 0.8, margin: '4px 0 0' }}>Inhaber & Experte</p>
                  </div>
                </div>
                <div style={{

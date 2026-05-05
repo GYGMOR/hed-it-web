@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   X,
   Loader2,
-  Filter
+  Filter,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 

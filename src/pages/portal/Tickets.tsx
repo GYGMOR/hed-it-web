@@ -68,11 +68,14 @@ const Tickets = () => {
 
   const fetchMessages = async (ticketId: string) => {
     try {
-      const response = await fetch(`/api/tickets/${ticketId}/comments`, {
+      // In the portal, we can use the detail endpoint which includes messages
+      const response = await fetch(`/api/portal/tickets/${ticketId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      if (data.success) setMessages(data.data);
+      if (data.success) {
+        setMessages(data.data.messages || []);
+      }
     } catch (err) {
       console.error('Failed to fetch messages');
     }
@@ -89,6 +92,7 @@ const Tickets = () => {
 
   const handleSelectTicket = (ticket: Ticket) => {
     setSelectedTicket(ticket);
+    setMessages([]); // Clear previous messages to show loader
     fetchMessages(ticket.id);
   };
 
@@ -97,7 +101,7 @@ const Tickets = () => {
     if (!newMessage.trim() || !selectedTicket) return;
 
     try {
-      const response = await fetch(`/api/tickets/${selectedTicket.id}/comments`, {
+      const response = await fetch(`/api/portal/tickets/${selectedTicket.id}/messages`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -107,7 +111,7 @@ const Tickets = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setMessages([...messages, {
+        const newMsg = {
           id: Date.now().toString(),
           sender_id: user?.id || '',
           message: newMessage,
@@ -115,7 +119,8 @@ const Tickets = () => {
           first_name: user?.firstName || '',
           last_name: user?.lastName || '',
           role: user?.role || ''
-        }]);
+        };
+        setMessages([...messages, newMsg]);
         setNewMessage('');
       }
     } catch (err) {
@@ -140,12 +145,37 @@ const Tickets = () => {
         setShowCreateModal(false);
         setNewTicket({ title: '', description: '', priority: 'medium', type: 'support' });
         fetchTickets();
-        alert('Ticket erfolgreich erstellt!');
       }
     } catch (err) {
       alert('Fehler beim Erstellen des Tickets.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedTicket) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/portal/tickets/${selectedTicket.id}/attachments`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMessages([...messages, data.data]);
+      }
+    } catch (err) {
+      console.error('Upload failed');
+    } finally {
+      setIsLoading(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -227,32 +257,54 @@ const Tickets = () => {
               </div>
 
               <div className="messages-area">
-                {messages.map((msg, i) => (
-                  <div key={i} className={`message-wrapper ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
-                    <div className="message-bubble">
-                      {msg.role !== 'customer' && <span className="sender-name">{msg.first_name} {msg.last_name} (HED-IT)</span>}
-                      <p className="message-text">{msg.message}</p>
-                      <span className="message-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                {messages.length > 0 ? (
+                  messages.map((msg: any, i: number) => (
+                    <div key={i} className={`message-wrapper ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
+                      <div className="message-bubble">
+                        {msg.role !== 'customer' && <span className="sender-name">{msg.first_name} {msg.last_name} (HED-IT)</span>}
+                        
+                        {msg.attachment_url ? (
+                          <div className="attachment-preview">
+                            <FileText size={20} />
+                            <div className="attachment-info">
+                              <p className="attachment-name">{msg.attachment_name}</p>
+                              <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="download-link">Ansehen</a>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="message-text">{msg.message}</p>
+                        )}
+                        
+                        <span className="message-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {messages.length === 0 && (
+                  ))
+                ) : (
                   <div className="empty-chat">
-                    <Loader2 className="animate-spin" size={32} opacity={0.2} />
-                    <p>Lade Nachrichten...</p>
+                    <p>Keine Nachrichten vorhanden. Schreiben Sie etwas!</p>
                   </div>
                 )}
               </div>
 
               <form className="chat-input" onSubmit={handleSendMessage}>
-                <button type="button" className="btn-icon"><Paperclip size={20} /></button>
+                <input 
+                  type="file" 
+                  id="chat-file-input" 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileUpload} 
+                />
+                <button type="button" className="btn-icon" onClick={() => document.getElementById('chat-file-input')?.click()}>
+                  <Paperclip size={20} />
+                </button>
                 <input 
                   type="text" 
                   placeholder="Nachricht schreiben..." 
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                 />
-                <button type="submit" className="btn-icon primary"><Send size={20} /></button>
+                <button type="submit" className="btn-icon primary" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                </button>
               </form>
             </div>
           ) : (
@@ -295,20 +347,28 @@ const Tickets = () => {
                 </div>
                 <div className="form-group">
                   <label>Kategorie</label>
-                  <select value={newTicket.type} onChange={(e) => setNewTicket({...newTicket, type: e.target.value})}>
-                    <option value="support">Allgemeiner Support</option>
-                    <option value="incident">Störung / Fehler</option>
-                    <option value="request">Änderungswunsch</option>
-                    <option value="billing">Rechnungsfrage</option>
+                  <select 
+                    value={newTicket.type} 
+                    onChange={(e) => setNewTicket({...newTicket, type: e.target.value})}
+                    style={{ color: 'var(--text-main)', background: 'var(--bg-section)' }}
+                  >
+                    <option value="support" style={{ color: 'black' }}>Allgemeiner Support</option>
+                    <option value="incident" style={{ color: 'black' }}>Störung / Fehler</option>
+                    <option value="request" style={{ color: 'black' }}>Änderungswunsch</option>
+                    <option value="billing" style={{ color: 'black' }}>Rechnungsfrage</option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Priorität</label>
-                  <select value={newTicket.priority} onChange={(e) => setNewTicket({...newTicket, priority: e.target.value})}>
-                    <option value="low">Niedrig</option>
-                    <option value="medium">Mittel</option>
-                    <option value="high">Hoch</option>
-                    <option value="critical">Kritisch (Notfall)</option>
+                  <select 
+                    value={newTicket.priority} 
+                    onChange={(e) => setNewTicket({...newTicket, priority: e.target.value})}
+                    style={{ color: 'var(--text-main)', background: 'var(--bg-section)' }}
+                  >
+                    <option value="low" style={{ color: 'black' }}>Niedrig</option>
+                    <option value="medium" style={{ color: 'black' }}>Mittel</option>
+                    <option value="high" style={{ color: 'black' }}>Hoch</option>
+                    <option value="critical" style={{ color: 'black' }}>Kritisch (Notfall)</option>
                   </select>
                 </div>
                 <div className="form-group">
@@ -382,6 +442,22 @@ const Tickets = () => {
         .sender-name { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; display: block; opacity: 0.7; letter-spacing: 0.5px; }
         .message-text { margin: 0; font-size: 15px; line-height: 1.6; }
         .message-time { font-size: 10px; margin-top: 8px; display: block; opacity: 0.6; }
+
+        .attachment-preview { 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
+          background: rgba(0,0,0,0.1); 
+          padding: 12px 16px; 
+          border-radius: 12px; 
+          border: 1px solid rgba(255,255,255,0.1); 
+          margin: 4px 0;
+          min-width: 200px;
+        }
+        .attachment-info { display: flex; flex-direction: column; gap: 2px; }
+        .attachment-name { font-size: 13px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .download-link { font-size: 11px; color: var(--primary); text-decoration: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .download-link:hover { text-decoration: underline; }
 
         .chat-input { padding: 24px; border-top: 1px solid var(--border); display: flex; gap: 16px; align-items: center; background: #08080a; }
         .chat-input input { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; color: white; outline: none; font-size: 15px; }

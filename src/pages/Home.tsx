@@ -119,13 +119,18 @@ const Home = () => {
       </section>
 
       {/* --- Why hed-it Section --- */}
-      <section className="section" style={{ padding: '240px 0' }}> {/* Even more spacing */}
+      <section className="section about-section">
         <div className="container">
-          <div className="hero-grid" style={{ gap: '120px', alignItems: 'center' }}>
-            <div>
+          <div className="hero-grid">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
               <span className="hero-tag" style={{ background: 'rgba(124, 58, 237, 0.1)', color: 'var(--secondary)', borderColor: 'rgba(124, 58, 237, 0.2)' }}>Hinter den Kulissen</span>
-              <h2 style={{ fontSize: '62px', marginBottom: '40px', lineHeight: 1 }}>Echte Expertise <br />ist persönlich.</h2>
-              <p className="hero-desc" style={{ fontSize: '20px', lineHeight: '1.9', marginBottom: '48px' }}>
+              <h2 className="about-title" style={{ fontSize: '62px', marginBottom: '40px', lineHeight: 1.1 }}>Echte Expertise <br />ist persönlich.</h2>
+              <p className="about-desc" style={{ fontSize: '20px', lineHeight: '1.9', marginBottom: '48px', color: 'var(--text-muted)' }}>
                 Als inhabergeführtes Unternehmen stehe ich mit meinem Namen für die Qualität jedes Projekts. 
                 Wir verstehen IT nicht als reinen Kostenfaktor, sondern als strategischen Wettbewerbsvorteil. 
                 Persönliche Betreuung auf Augenhöhe ist bei uns Standard.
@@ -146,65 +151,28 @@ const Home = () => {
                     <li className="flex gap-4 items-center" style={{ fontSize: '17px', fontWeight: 600 }}><Zap size={22} color="var(--primary)" /> 100% Individualität statt Standard-Lösungen</li>
                  </ul>
               </div>
-            </div>
-
+            </motion.div>
+ 
              <motion.div 
               className="ceo-visual"
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              style={{ position: 'relative' }}
+              transition={{ duration: 1 }}
             >
-               <div style={{ 
-                 width: '100%', 
-                 height: '650px', 
-                 background: 'var(--bg-card)', 
-                 borderRadius: '40px', 
-                 border: '1px solid var(--border)',
-                 display: 'flex',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 overflow: 'hidden',
-                 boxShadow: '0 50px 100px rgba(0,0,0,0.4)',
-                 position: 'relative'
-               }}>
+               <div className="ceo-card">
                  <img 
                    src="/portre/joel.hediger.jpeg" 
                    alt="Joel Hediger" 
-                   style={{ 
-                     width: '100%', 
-                     height: '100%', 
-                     objectFit: 'cover',
-                     filter: 'contrast(1.05)' 
-                   }} 
                  />
-                 <div style={{
-                   position: 'absolute',
-                   bottom: 0,
-                   left: 0,
-                   right: 0,
-                   padding: '40px',
-                   background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                   color: 'white'
-                 }}>
-                    <h3 className="premium-gradient" style={{ margin: 0, fontSize: '32px' }}>Joel Hediger</h3>
-                    <p style={{ fontSize: '16px', opacity: 0.8, margin: '4px 0 0' }}>Inhaber & Experte</p>
+                 <div className="ceo-info">
+                    <h3 className="premium-gradient">Joel Hediger</h3>
+                    <p>Inhaber & Experte</p>
                  </div>
                </div>
-               <div style={{
-                 position: 'absolute',
-                 bottom: '-40px',
-                 right: '-40px',
-                 width: '300px',
-                 height: '300px',
-                 background: 'var(--secondary-glow)',
-                 filter: 'blur(80px)',
-                 zIndex: -1,
-                 opacity: 0.4
-               }} />
+               <div className="glow-effect" />
             </motion.div>
           </div>
-
         </div>
       </section>
     </div>

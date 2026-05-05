@@ -74,11 +74,18 @@ const PortalLayout = () => {
       </main>
 
       <style>{`
-        .portal-container { display: flex; min-height: 100vh; background: #020204; color: white; padding-top: var(--nav-height); }
+        .portal-container { 
+          display: flex; 
+          min-height: 100vh; 
+          background: var(--bg-main); 
+          color: var(--text-main); 
+          padding-top: var(--nav-height); 
+          transition: all 0.4s ease;
+        }
         
         .portal-sidebar { 
           width: 280px; 
-          background: #08080a; 
+          background: var(--bg-section); 
           border-right: 1px solid var(--border); 
           display: flex; 
           flex-direction: column;
@@ -87,6 +94,7 @@ const PortalLayout = () => {
           bottom: 0;
           left: 0;
           z-index: 10;
+          transition: all 0.4s ease;
         }
 
         .sidebar-header { padding: 32px 24px; border-bottom: 1px solid var(--border); }
@@ -99,8 +107,9 @@ const PortalLayout = () => {
           display: flex; 
           align-items: center; 
           justify-content: center;
+          color: white;
         }
-        .user-name { font-weight: 700; font-size: 15px; margin: 0; }
+        .user-name { font-weight: 700; font-size: 15px; margin: 0; color: var(--text-main); }
         .user-role { font-size: 12px; color: var(--text-muted); margin: 0; }
 
         .portal-nav { flex: 1; padding: 24px 12px; display: flex; flex-direction: column; gap: 4px; }
@@ -115,7 +124,7 @@ const PortalLayout = () => {
           transition: all 0.3s ease;
           position: relative;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.03); color: white; }
+        .nav-item:hover { background: rgba(var(--primary), 0.05); color: var(--text-main); }
         .nav-item.active { background: var(--primary-glow); color: var(--primary); }
         .nav-item .chevron { margin-left: auto; opacity: 0; transition: all 0.3s ease; }
         .nav-item.active .chevron { opacity: 1; }
@@ -136,7 +145,7 @@ const PortalLayout = () => {
         }
         .logout-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
-        .portal-main { flex: 1; margin-left: 280px; padding: 40px; }
+        .portal-main { flex: 1; margin-left: 280px; padding: 40px; background: var(--bg-main); transition: all 0.4s ease; }
         .portal-content { max-width: 1200px; margin: 0 auto; }
 
         @media (max-width: 1024px) {

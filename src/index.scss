@@ -378,11 +378,16 @@ h1, h2, h3, h4 {
   .hero-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 64px;
+    gap: 48px;
     align-items: center;
 
-    @media (min-width: 1024px) {
+    @media (min-width: 768px) {
       grid-template-columns: 1.2fr 1fr;
+      gap: 64px;
+    }
+
+    @media (min-width: 1024px) {
+      gap: 80px;
     }
   }
 }
@@ -674,17 +679,36 @@ h1, h2, h3, h4 {
     .reference-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6));
+      background: rgba(5, 5, 7, 0.85);
+      backdrop-filter: blur(8px);
       display: flex;
-      align-items: flex-end;
-      padding: 24px;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: all 0.4s ease;
+      
+      .overlay-content {
+        text-align: center;
+        transform: translateY(20px);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        .overlay-desc {
+          color: white;
+          font-size: 14px;
+          font-weight: 700;
+          margin-bottom: 24px;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          opacity: 0.8;
+        }
+      }
     }
   }
 
   &:hover .reference-overlay {
     opacity: 1;
+    .overlay-content { transform: translateY(0); }
   }
 
   .reference-content {
@@ -752,5 +776,99 @@ h1, h2, h3, h4 {
         border-color: var(--primary);
       }
     }
+  }
+}
+// --- CEO Visual & About Section ---
+.about-section {
+  padding: 120px 0;
+  
+  @media (min-width: 1024px) {
+    padding: 200px 0;
+  }
+
+  .hero-grid {
+    @media (min-width: 768px) {
+      gap: 40px;
+    }
+    @media (min-width: 1024px) {
+      gap: 120px;
+    }
+  }
+}
+
+.ceo-visual {
+  position: relative;
+  width: 100%;
+  
+  .ceo-card {
+    width: 100%; 
+    height: 450px; 
+    background: var(--bg-card); 
+    border-radius: 40px; 
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    position: relative;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+    @media (min-width: 768px) {
+      height: 550px;
+    }
+
+    @media (min-width: 1024px) {
+      height: 650px;
+    }
+
+    &:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: var(--primary);
+    }
+
+    img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover;
+      filter: contrast(1.05);
+      transition: transform 0.8s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+
+    .ceo-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 32px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      color: white;
+      
+      h3 { margin: 0; fontSize: 28px; }
+      p { fontSize: 14px; opacity: 0.8; margin: 4px 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+      @media (min-width: 1024px) {
+        padding: 40px;
+        h3 { fontSize: 32px; }
+        p { fontSize: 16px; }
+      }
+    }
+  }
+
+  .glow-effect {
+    position: absolute;
+    bottom: -40px;
+    right: -40px;
+    width: 250px;
+    height: 250px;
+    background: var(--secondary-glow);
+    filter: blur(80px);
+    zIndex: -1;
+    opacity: 0.4;
+    pointer-events: none;
   }
 }

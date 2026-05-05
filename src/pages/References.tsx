@@ -54,37 +54,44 @@ const References = () => {
         </div>
       </section>
 
-      <section className="section section-dark">
+      <section className="section section-dark" style={{ paddingTop: 0 }}>
         <div className="container">
-          <div className="items-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
+          <div className="items-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '48px' }}>
             {projects.map((p, i) => (
               <motion.div 
                 key={i} 
                 className="reference-card"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.1, duration: 0.6 }}
               >
                 <div className="reference-image">
-                  <img src={p.img} alt={p.title} />
+                  <img src={p.img} alt={p.title} style={{ objectPosition: 'top' }} />
                   <div className="reference-overlay">
-                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-visit">
-                      Zur Webseite <ExternalLink size={16} />
-                    </a>
+                    <div className="overlay-content">
+                      <p className="overlay-desc">Projekt live ansehen</p>
+                      <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                        Zur Webseite <ExternalLink size={18} />
+                      </a>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="reference-content">
-                  <div className="reference-tags">
-                    {p.tags.map(tag => <span key={tag} className="ref-tag">{tag}</span>)}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="reference-tags">
+                      {p.tags.map(tag => <span key={tag} className="ref-tag">{tag}</span>)}
+                    </div>
+                    <span className="ref-category" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>{p.category}</span>
                   </div>
-                  <span className="ref-customer">Kunde: {p.customer}</span>
-                  <h3 className="ref-title">{p.title}</h3>
-                  <p className="ref-desc">{p.desc}</p>
                   
-                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-visit lg-hidden">
-                    Projekt ansehen <ExternalLink size={16} />
+                  <h3 className="ref-title">{p.title}</h3>
+                  <p className="ref-customer" style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: 600 }}>Kunde: {p.customer}</p>
+                  <p className="ref-desc" style={{ marginBottom: '24px', flex: 1 }}>{p.desc}</p>
+                  
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline w-full lg-hidden">
+                    Webseite besuchen <ExternalLink size={16} />
                   </a>
                 </div>
               </motion.div>

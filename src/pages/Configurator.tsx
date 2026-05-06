@@ -393,11 +393,11 @@ const Configurator = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
                       <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>Ihre Kontaktdaten</h4>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <input type="text" placeholder="Vorname" value={leadFirstName} onChange={e => setLeadFirstName(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
-                        <input type="text" placeholder="Nachname" value={leadLastName} onChange={e => setLeadLastName(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
+                        <input type="text" placeholder="Vorname" value={leadFirstName} onChange={e => setLeadFirstName(e.target.value)} className="lead-input" />
+                        <input type="text" placeholder="Nachname" value={leadLastName} onChange={e => setLeadLastName(e.target.value)} className="lead-input" />
                       </div>
-                      <input type="email" placeholder="E-Mail Adresse" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
-                      <input type="tel" placeholder="Telefon (Optional)" value={leadPhone} onChange={e => setLeadPhone(e.target.value)} className="input-container" style={{ padding: '12px 16px' }} />
+                      <input type="email" placeholder="E-Mail Adresse" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} className="lead-input" />
+                      <input type="tel" placeholder="Telefon (Optional)" value={leadPhone} onChange={e => setLeadPhone(e.target.value)} className="lead-input" />
                       
                       <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                         <button className="btn btn-secondary" onClick={() => setShowLeadForm(false)}>Zurück</button>
@@ -535,6 +535,26 @@ const Configurator = () => {
         .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: block; margin-bottom: 12px; }
         .summary-item { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 16px; align-items: baseline; gap: 12px; }
 
+        .lead-input {
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          padding: 12px 16px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          color: var(--text-main);
+          font-size: 15px;
+          outline: none;
+          transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .lead-input:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 2px rgba(0,242,255,0.1);
+        }
+        .lead-input::placeholder {
+          color: var(--text-muted);
+        }
         
         .final-actions { margin-top: 32px; }
         .btn.success { background: #10b981; border-color: #10b981; }

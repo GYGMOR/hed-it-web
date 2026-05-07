@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, 
@@ -13,7 +13,12 @@ import {
   TrendingUp,
   ShieldCheck,
   Mail,
-  HardDrive
+  HardDrive,
+  Building2,
+  Users,
+  User,
+  Calculator,
+  Send
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
@@ -39,6 +44,36 @@ const ALL_UPGRADES = [
   { id: 'cloud', name: 'Cloud Speicher 1TB', monthly: 15.00, setup: 0, desc: 'Sicheres Cloud-Backup für Ihre Firmendaten.', icon: <HardDrive size={24} /> },
 ];
 
+type ClientType = 'business' | 'association' | 'private';
+
+const CLIENT_TYPES = [
+  { id: 'business', name: 'Unternehmen', icon: <Building2 />, desc: 'B2B / B2C', discount: 0 },
+  { id: 'association', name: 'Verein', icon: <Users />, desc: 'Vereine & NPOs (-50%)', discount: 0.5 },
+  { id: 'private', name: 'Privatperson', icon: <User />, desc: 'Privat (-70%)', discount: 0.7 },
+];
+
+const PROJECT_TYPES = [
+  { id: 'lp', name: 'Landing Page', price: 1500, desc: 'Einseitige Webseite' },
+  { id: 'corp', name: 'Unternehmenswebseite', price: 3500, desc: 'Mehrseitige Website' },
+  { id: 'shop', name: 'Webshop', price: 8000, desc: 'Online-Shop mit Zahlungsabwicklung' },
+  { id: 'app', name: 'Web Applikation', price: 12000, desc: 'Massgeschneiderte Web-App' },
+  { id: 'mobile', name: 'Mobile App', price: 15000, desc: 'Native iOS/Android App' },
+];
+
+const DESIGN_LEVELS = [
+  { id: 'template', name: 'Template Basiert', price: 0, desc: 'Bewährte Vorlagen' },
+  { id: 'custom', name: 'Individuelles Design', price: 2000, desc: 'Design nach Ihren Wünschen' },
+  { id: 'premium', name: 'Premium / 3D', price: 4500, desc: 'Hochwertige Animationen' },
+];
+
+const CALC_FEATURES = [
+  { id: 'cms', name: 'CMS Integration', price: 1600, desc: 'Inhalte selbst bearbeiten' },
+  { id: 'seo', name: 'SEO Optimierung', price: 1200, desc: 'Bessere Sichtbarkeit bei Google' },
+  { id: 'lang', name: 'Mehrsprachigkeit', price: 2100, desc: 'Website in mehreren Sprachen' },
+  { id: 'stats', name: 'Erweiterte Analyse', price: 800, desc: 'Detaillierte Besucherstatistiken' },
+  { id: 'news', name: 'Newsletter Setup', price: 1200, desc: 'E-Mail Marketing Integration' },
+];
+
 const Contracts = () => {
   const { token } = useAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -46,6 +81,14 @@ const Contracts = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedUpgradeId, setSelectedUpgradeId] = useState<string | null>(null);
   const [isSigning, setIsSigning] = useState(false);
+
+  // Calculator state
+  const [calcClientType, setCalcClientType] = useState<ClientType>('business');
+  const [calcProjectType, setCalcProjectType] = useState<string>('lp');
+  const [calcDesignLevel, setCalcDesignLevel] = useState<string>('template');
+  const [calcFeatures, setCalcFeatures] = useState<Set<string>>(new Set());
+  const [calcSubmitting, setCalcSubmitting] = useState(false);
+  const [calcSuccess, setCalcSuccess] = useState(false);
 
   const fetchContracts = async () => {
     try {
@@ -86,10 +129,12 @@ const Contracts = () => {
         })
       });
       
+      const data = await response.json();
       if (response.ok) {
         setShowUpgradeModal(false);
         setSelectedUpgradeId(null);
-        alert('Upgrade erfolgreich gebucht! Wir haben ein Ticket für die Einrichtung erstellt.');
+        alert(data.message || 'Erfolgreich gebucht!');
+        fetchContracts(); // Refresh contracts list
       }
     } catch (err) {
       alert('Fehler bei der Buchung.');
@@ -103,6 +148,51 @@ const Contracts = () => {
   );
 
   const selectedUpgrade = ALL_UPGRADES.find(u => u.id === selectedUpgradeId);
+
+  // Check if a calculator item is already purchased
+  const isItemOwned = (itemName: string) => {
+    return contracts.some(c => {
+      const cName = (c.name || c.title || '').toLowerCase();
+      const check = itemName.toLowerCase();
+      return cName.includes(check.split(' ')[0]) || check.includes(cName.split(' ')[0]);
+    });
+  };
+
+  const toggleCalcFeature = (id: string) => {
+    const f = CALC_FEATURES.find(f => f.id === id);
+    if (f && isItemOwned(f.name)) return;
+    const next = new Set(calcFeatures);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setCalcFeatures(next);
+  };
+
+  const calcTotals = useMemo(() => {
+    const base = PROJECT_TYPES.find(p => p.id === calcProjectType)?.price || 0;
+    const design = DESIGN_LEVELS.find(d => d.id === calcDesignLevel)?.price || 0;
+    const feat = Array.from(calcFeatures).reduce((s, id) => s + (CALC_FEATURES.find(f => f.id === id)?.price || 0), 0);
+    const subtotal = base + design + feat;
+    const disc = CLIENT_TYPES.find(c => c.id === calcClientType)?.discount || 0;
+    const discountAmt = subtotal * disc;
+    return { subtotal, discountAmt, total: subtotal - discountAmt };
+  }, [calcClientType, calcProjectType, calcDesignLevel, calcFeatures]);
+
+  const handleCalcSubmit = async () => {
+    setCalcSubmitting(true);
+    try {
+      const proj = PROJECT_TYPES.find(p => p.id === calcProjectType);
+      const des = DESIGN_LEVELS.find(d => d.id === calcDesignLevel);
+      const feats = Array.from(calcFeatures).map(id => CALC_FEATURES.find(f => f.id === id)?.name).filter(Boolean);
+      const desc = `Projekttyp: ${proj?.name}\nDesign: ${des?.name}\nFeatures: ${feats.join(', ') || 'Keine'}\nTotal: ${calcTotals.total.toFixed(2)} CHF`;
+      await fetch('/api/portal/contracts/upgrade', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serviceId: 'calculator', serviceName: `Projekt: ${proj?.name}`, price: `${calcTotals.total.toFixed(2)} CHF`, type: 'onetime' })
+      });
+      setCalcSuccess(true);
+      setTimeout(() => setCalcSuccess(false), 5000);
+    } catch (err) { alert('Fehler beim Senden.'); }
+    finally { setCalcSubmitting(false); }
+  };
 
   return (
     <div className="portal-contracts">
@@ -203,6 +293,116 @@ const Contracts = () => {
                 <Plus size={18} />
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Service Calculator */}
+      {!loading && (
+        <section className="portal-calculator">
+          <div className="calc-header-row">
+            <div>
+              <h2 style={{ fontSize: 28, marginBottom: 8 }}><Calculator size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Service-Kalkulator</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Berechnen Sie die Kosten für Ihr nächstes Projekt. Bereits gebuchte Services sind ausgegraut.</p>
+            </div>
+          </div>
+
+          <div className="portal-calc-grid">
+            <div className="portal-calc-main">
+              {/* 1. Client Type */}
+              <div className="pcalc-section">
+                <h4 className="pcalc-step">1. Kundentyp</h4>
+                <div className="pcalc-client-grid">
+                  {CLIENT_TYPES.map(c => (
+                    <div key={c.id} className={`pcalc-client-card ${calcClientType === c.id ? 'active' : ''}`} onClick={() => setCalcClientType(c.id as ClientType)}>
+                      <div className="pcalc-client-icon">{c.icon}</div>
+                      <h5>{c.name}</h5>
+                      <p>{c.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Project Type */}
+              <div className="pcalc-section">
+                <h4 className="pcalc-step">2. Projekttyp</h4>
+                <div className="pcalc-list">
+                  {PROJECT_TYPES.map(p => {
+                    const owned = isItemOwned(p.name);
+                    return (
+                      <div key={p.id} className={`pcalc-item ${calcProjectType === p.id ? 'active' : ''} ${owned ? 'owned' : ''}`} onClick={() => !owned && setCalcProjectType(p.id)}>
+                        <div className="pcalc-radio"></div>
+                        <div className="pcalc-item-info"><span className="pcalc-item-name">{p.name}</span><span className="pcalc-item-desc">{p.desc}</span></div>
+                        <span className="pcalc-item-price">{owned ? 'Bereits gebucht' : `+ ${p.price.toLocaleString()} CHF`}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Design */}
+              <div className="pcalc-section">
+                <h4 className="pcalc-step">3. Design Komplexität</h4>
+                <div className="pcalc-list">
+                  {DESIGN_LEVELS.map(d => {
+                    const owned = isItemOwned(d.name);
+                    return (
+                      <div key={d.id} className={`pcalc-item ${calcDesignLevel === d.id ? 'active' : ''} ${owned ? 'owned' : ''}`} onClick={() => !owned && setCalcDesignLevel(d.id)}>
+                        <div className="pcalc-radio"></div>
+                        <div className="pcalc-item-info"><span className="pcalc-item-name">{d.name}</span><span className="pcalc-item-desc">{d.desc}</span></div>
+                        <span className="pcalc-item-price">{owned ? 'Bereits gebucht' : d.price === 0 ? 'Inklusive' : `+ ${d.price.toLocaleString()} CHF`}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Features */}
+              <div className="pcalc-section">
+                <h4 className="pcalc-step">4. Zusätzliche Features</h4>
+                <div className="pcalc-list">
+                  {CALC_FEATURES.map(f => {
+                    const owned = isItemOwned(f.name);
+                    return (
+                      <div key={f.id} className={`pcalc-item checkbox ${calcFeatures.has(f.id) ? 'active' : ''} ${owned ? 'owned' : ''}`} onClick={() => toggleCalcFeature(f.id)}>
+                        <div className="pcalc-check"></div>
+                        <div className="pcalc-item-info"><span className="pcalc-item-name">{f.name}</span><span className="pcalc-item-desc">{f.desc}</span></div>
+                        <span className="pcalc-item-price">{owned ? 'Bereits gebucht' : `+ ${f.price.toLocaleString()} CHF`}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Sidebar */}
+            <aside className="portal-calc-sidebar">
+              <div className="pcalc-summary">
+                <h3 style={{ marginBottom: 20 }}>Kostenschätzung</h3>
+                <div className="pcalc-summary-rows">
+                  <div className="pcalc-srow"><span>Basis & Design</span><span>{((PROJECT_TYPES.find(p => p.id === calcProjectType)?.price || 0) + (DESIGN_LEVELS.find(d => d.id === calcDesignLevel)?.price || 0)).toLocaleString()} CHF</span></div>
+                  {calcFeatures.size > 0 && (
+                    <div className="pcalc-srow"><span>Features</span><span>{Array.from(calcFeatures).reduce((s, id) => s + (CALC_FEATURES.find(f => f.id === id)?.price || 0), 0).toLocaleString()} CHF</span></div>
+                  )}
+                  {calcTotals.discountAmt > 0 && (
+                    <div className="pcalc-srow discount"><span>Rabatt ({calcClientType === 'association' ? '50%' : '70%'})</span><span>- {calcTotals.discountAmt.toLocaleString()} CHF</span></div>
+                  )}
+                </div>
+                <div className="pcalc-total">
+                  <span className="pcalc-total-label">Geschätztes Total</span>
+                  <span className="pcalc-total-value">{calcTotals.total.toLocaleString()} CHF</span>
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '16px 0' }}>Unverbindliche Schätzung. Finaler Preis je nach Anforderungen.</p>
+
+                {calcSuccess ? (
+                  <div className="pcalc-success"><CheckCircle2 size={20} /> Anfrage gesendet!</div>
+                ) : (
+                  <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleCalcSubmit} disabled={calcSubmitting}>
+                    {calcSubmitting ? <><Loader2 className="animate-spin" size={18} /> Senden...</> : <><Send size={18} /> Anfrage senden</>}
+                  </button>
+                )}
+              </div>
+            </aside>
           </div>
         </section>
       )}
@@ -346,6 +546,55 @@ const Contracts = () => {
 
         .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .btn-icon { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* Portal Calculator */
+        .portal-calculator { margin-top: 40px; padding-top: 40px; border-top: 1px solid var(--border); }
+        .calc-header-row { margin-bottom: 32px; }
+        .portal-calc-grid { display: grid; grid-template-columns: 1fr; gap: 32px; }
+        @media (min-width: 1024px) { .portal-calc-grid { grid-template-columns: 2fr 1fr; } }
+
+        .pcalc-section { background: var(--bg-card); padding: 28px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 24px; }
+        .pcalc-step { margin-bottom: 16px; font-size: 16px; color: var(--primary); }
+
+        .pcalc-client-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .pcalc-client-card { padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .pcalc-client-card:hover { border-color: var(--primary); background: rgba(0,242,255,0.04); }
+        .pcalc-client-card.active { border-color: var(--primary); background: var(--primary); color: #000; }
+        .pcalc-client-card.active p { color: rgba(0,0,0,0.7); }
+        .pcalc-client-icon { display: flex; justify-content: center; margin-bottom: 8px; }
+        .pcalc-client-card h5 { margin: 0 0 4px; font-size: 14px; }
+        .pcalc-client-card p { font-size: 11px; color: var(--text-muted); margin: 0; }
+
+        .pcalc-list { display: flex; flex-direction: column; gap: 8px; }
+        .pcalc-item { display: flex; align-items: center; padding: 14px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; gap: 14px; }
+        .pcalc-item:hover:not(.owned) { background: rgba(255,255,255,0.05); }
+        .pcalc-item.active:not(.owned) { border-color: var(--primary); background: rgba(0,242,255,0.03); }
+        .pcalc-item.owned { opacity: 0.4; cursor: not-allowed; position: relative; }
+
+        .pcalc-radio { width: 14px; height: 14px; border: 2px solid var(--border); border-radius: 50%; flex-shrink: 0; position: relative; }
+        .pcalc-item.active:not(.owned) .pcalc-radio { border-color: var(--primary); }
+        .pcalc-item.active:not(.owned) .pcalc-radio::after { content: ''; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; background: var(--primary); border-radius: 50%; }
+
+        .pcalc-check { width: 14px; height: 14px; border: 2px solid var(--border); border-radius: 3px; flex-shrink: 0; }
+        .pcalc-item.active:not(.owned) .pcalc-check { border-color: var(--primary); background: var(--primary); }
+
+        .pcalc-item-info { flex: 1; display: flex; flex-direction: column; }
+        .pcalc-item-name { font-weight: 700; font-size: 14px; }
+        .pcalc-item-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+        .pcalc-item-price { font-weight: 800; color: var(--primary); font-size: 13px; white-space: nowrap; }
+        .pcalc-item.owned .pcalc-item-price { color: var(--text-muted); font-weight: 600; font-style: italic; }
+
+        .portal-calc-sidebar { position: relative; }
+        .pcalc-summary { position: sticky; top: 120px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 28px; }
+        .pcalc-summary-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .pcalc-srow { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); }
+        .pcalc-srow.discount { color: #ff4d4d; font-weight: 700; }
+        .pcalc-total { border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+        .pcalc-total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+        .pcalc-total-value { font-size: 28px; font-weight: 900; color: var(--primary); }
+        .pcalc-success { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; color: #10b981; font-weight: 700; font-size: 14px; }
+
+        @media (max-width: 768px) { .pcalc-client-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>
   );

@@ -145,6 +145,8 @@ const Contracts = () => {
     }
   };
 
+  const [detailContract, setDetailContract] = useState<any>(null);
+  const [cancellationSent, setCancellationSent] = useState(false);
   const [signingContract, setSigningContract] = useState<any>(null);
   const signatureCanvasRef = React.useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -206,6 +208,28 @@ const Contracts = () => {
       }
     } catch (err) {
       alert('Fehler beim Signieren.');
+    }
+  };
+
+  const handleCancelContract = async (contract: any) => {
+    try {
+      const res = await fetch('/api/portal/tickets', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Vertragskündigung: ${contract.name || contract.title}`,
+          description: `Ich möchte den Vertrag "${contract.name || contract.title}" (${contract.contract_number || contract.id?.substring(0,8)}) kündigen.`,
+          priority: 'medium',
+          type: 'cancellation',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCancellationSent(true);
+        setTimeout(() => { setCancellationSent(false); setDetailContract(null); }, 3000);
+      }
+    } catch (err) {
+      alert('Fehler beim Senden der Kündigung.');
     }
   };
 
@@ -306,10 +330,12 @@ const Contracts = () => {
       ) : (
         <div className="contracts-grid">
           {contracts.map((contract) => (
-            <motion.div 
-              key={contract.id} 
+            <motion.div
+              key={contract.id}
               className="contract-card"
               whileHover={{ translateY: -4 }}
+              onClick={() => setDetailContract(contract)}
+              style={{ cursor: 'pointer' }}
             >
               <div className="contract-header">
                 <div className="contract-icon" style={{ backgroundColor: contract.source === 'file' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 242, 255, 0.1)', color: contract.source === 'file' ? '#ef4444' : 'var(--primary)' }}>
@@ -347,17 +373,17 @@ const Contracts = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
                   {contract.source === 'file' ? (
-                    <button className="btn btn-outline btn-sm" onClick={() => window.open(contract.path, '_blank')}>
+                    <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); window.open(contract.path, '_blank'); }}>
                       <ExternalLink size={14} /> Öffnen
                     </button>
                   ) : (
                     <>
                       {contract.status === 'pending_signature' ? (
-                        <button className="btn btn-primary btn-sm" onClick={() => setSigningContract(contract)} style={{ padding: '4px 12px', fontSize: 13 }}>
+                        <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); setSigningContract(contract); }} style={{ padding: '4px 12px', fontSize: 13 }}>
                           <FileSignature size={14} style={{ marginRight: 4 }} /> Signieren
                         </button>
                       ) : (
-                        <button className="btn btn-outline btn-sm" onClick={() => downloadPdf(contract.id)}>
+                        <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); downloadPdf(contract.id); }}>
                           <Download size={14} style={{ marginRight: 4 }} /> PDF
                         </button>
                       )}
@@ -369,6 +395,94 @@ const Contracts = () => {
           ))}
         </div>
       )}
+
+      {/* Contract Detail Modal */}
+      <AnimatePresence>
+        {detailContract && (
+          <div className="modal-overlay" onClick={() => setDetailContract(null)}>
+            <motion.div
+              className="modal-content"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 520, width: '95%' }}
+            >
+              <div className="modal-header">
+                <h3 style={{ fontSize: 20 }}>{detailContract.name || detailContract.title}</h3>
+                <button className="close-btn" onClick={() => setDetailContract(null)}><X size={24} /></button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '8px 0' }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Vertragsnummer</span>
+                    <span style={{ fontWeight: 700 }}>{detailContract.contract_number || 'CON-' + detailContract.id?.substring(0,8).toUpperCase()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Status</span>
+                    <span className={`status-badge ${detailContract.status}`}>{detailContract.status}</span>
+                  </div>
+                  {detailContract.source === 'contract' && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Betrag</span>
+                        <span style={{ fontWeight: 900, color: 'var(--primary)', fontSize: 18 }}>
+                          {Number(detailContract.monthly_value || 0).toFixed(2)} CHF / Monat
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Abrechnungszyklus</span>
+                        <span style={{ fontWeight: 600 }}>{detailContract.payment_cycle || 'Monatlich'}</span>
+                      </div>
+                    </>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Datum</span>
+                    <span style={{ fontWeight: 600 }}>{new Date(detailContract.date).toLocaleDateString('de-CH')}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 12 }}>
+                  {detailContract.source === 'file' ? (
+                    <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => window.open(detailContract.path, '_blank')}>
+                      <ExternalLink size={16} /> Dokument öffnen
+                    </button>
+                  ) : (
+                    <>
+                      {detailContract.status === 'pending_signature' ? (
+                        <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { setSigningContract(detailContract); setDetailContract(null); }}>
+                          <FileSignature size={16} /> Jetzt signieren
+                        </button>
+                      ) : (
+                        <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => downloadPdf(detailContract.id)}>
+                          <Download size={16} /> PDF herunterladen
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+                  {cancellationSent ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, color: '#10b981', fontWeight: 700, fontSize: 14 }}>
+                      <CheckCircle2 size={18} /> Kündigungsanfrage wurde übermittelt.
+                    </div>
+                  ) : (
+                    <button
+                      className="btn btn-outline"
+                      style={{ width: '100%', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', justifyContent: 'center' }}
+                      onClick={() => handleCancelContract(detailContract)}
+                    >
+                      Vertrag kündigen / anpassen
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {signingContract && (
         <div className="modal-overlay" style={{ zIndex: 1000 }}>

@@ -365,7 +365,7 @@ const Invoices = () => {
         .form-group input::placeholder { color: rgba(255,255,255,0.2); }
         .field-error { font-size: 12px; color: #ef4444; font-weight: 600; }
 
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
 
         .secure-note { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #10b981; font-weight: 600; padding: 12px 16px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 10px; }
       `}</style>

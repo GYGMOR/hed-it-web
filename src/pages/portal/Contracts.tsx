@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FileText, 
-  Plus, 
-  CheckCircle2, 
-  Calendar, 
-  Globe, 
+import {
+  FileText,
+  Plus,
+  CheckCircle2,
+  Calendar,
+  Globe,
   Download,
   X,
   PenTool,
@@ -21,10 +21,13 @@ import {
   Calculator,
   Send,
   ExternalLink,
-  FileSignature
+  FileSignature,
+  Eye,
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
+import { PortalDocumentPreview } from '../../components/PortalDocumentPreview';
+import type { PortalDoc } from '../../components/PortalDocumentPreview';
 
 interface Contract {
   id: string;
@@ -149,6 +152,26 @@ const Contracts = () => {
   const [detailContract, setDetailContract] = useState<any>(null);
   const [cancellationSent, setCancellationSent] = useState(false);
   const [signingContract, setSigningContract] = useState<any>(null);
+  const [previewDoc, setPreviewDoc] = useState<PortalDoc | null>(null);
+
+  const openContractPreview = (contract: any) => {
+    const items = typeof contract.items === 'string'
+      ? (() => { try { return JSON.parse(contract.items); } catch { return []; } })()
+      : (contract.items || []);
+    setPreviewDoc({
+      type: 'contract',
+      id: contract.id,
+      number: contract.contract_number || 'CON-' + contract.id.substring(0, 8).toUpperCase(),
+      title: contract.name || contract.title || 'Dienstleistungsvertrag',
+      company_name: contract.company_name,
+      status: contract.status,
+      total: parseFloat(String(contract.total || contract.monthly_value || 0)),
+      items,
+      created_at: contract.date || contract.created_at,
+      notes: contract.notes,
+      discount_percent: contract.discount_percent || 0,
+    });
+  };
   const signatureCanvasRef = React.useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -486,6 +509,9 @@ const Contracts = () => {
                     </button>
                   ) : (
                     <>
+                      <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); openContractPreview(contract); }} title="Dokument anzeigen">
+                        <Eye size={14} />
+                      </button>
                       {contract.status === 'pending_signature' ? (
                         <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); setSigningContract(contract); }} style={{ padding: '4px 12px', fontSize: 13 }}>
                           <FileSignature size={14} style={{ marginRight: 4 }} /> Signieren
@@ -518,7 +544,12 @@ const Contracts = () => {
             >
               <div className="modal-header">
                 <h3 style={{ fontSize: 20 }}>{detailContract.name || detailContract.title}</h3>
-                <button className="close-btn" onClick={() => setDetailContract(null)}><X size={24} /></button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button className="btn btn-outline btn-sm" onClick={() => openContractPreview(detailContract)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Eye size={14} /> Dokument
+                  </button>
+                  <button className="close-btn" onClick={() => setDetailContract(null)}><X size={24} /></button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '8px 0' }}>
@@ -955,6 +986,8 @@ const Contracts = () => {
 
         @media (max-width: 768px) { .pcalc-client-grid { grid-template-columns: 1fr; } }
       `}</style>
+
+      {previewDoc && <PortalDocumentPreview doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
     </div>
   );
 };

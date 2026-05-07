@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText, CheckCircle2, XCircle, Clock, PenTool, X,
-  Loader2, ChevronRight, AlertCircle
+  Loader2, ChevronRight, Eye
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { PortalDocumentPreview } from '../../components/PortalDocumentPreview';
+import type { PortalDoc } from '../../components/PortalDocumentPreview';
 
 interface Proposal {
   id: string;
@@ -21,6 +23,7 @@ interface Proposal {
   items: any[];
   created_at: string;
   signed_at?: string;
+  _legacy?: boolean;
 }
 
 const STATUS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -44,7 +47,28 @@ export default function Offers() {
   const [rejecting, setRejecting] = useState(false);
   const [done, setDone] = useState<'signed' | 'rejected' | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<PortalDoc | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const openPreview = (p: Proposal) => {
+    const items = typeof p.items === 'string' ? JSON.parse(p.items || '[]') : (p.items || []);
+    setPreviewDoc({
+      type: 'offer',
+      id: p.id,
+      number: p.proposal_number,
+      title: p.title,
+      company_name: p.company_name,
+      status: p.status,
+      total: parseFloat(String(p.total || 0)),
+      subtotal: parseFloat(String(p.subtotal || 0)),
+      tax_total: parseFloat(String(p.tax_total || 0)),
+      discount_percent: p.discount_percent,
+      items,
+      created_at: p.created_at,
+      valid_until: p.valid_until,
+      notes: p.notes,
+    });
+  };
 
   const fetch_ = async () => {
     setLoading(true);
@@ -171,9 +195,14 @@ export default function Offers() {
                   <div>
                     <span className="offer-total">CHF {parseFloat(String(p.total || 0)).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</span>
                   </div>
-                  <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); setSelected(p); }}>
-                    Details <ChevronRight size={14} />
-                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); openPreview(p); }} title="Dokument anzeigen">
+                      <Eye size={14} />
+                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); setSelected(p); }}>
+                      Details <ChevronRight size={14} />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             );
@@ -212,7 +241,12 @@ export default function Offers() {
                       <h3 style={{ fontSize: 20 }}>{selected.title}</h3>
                       <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>{selected.proposal_number}</p>
                     </div>
-                    <button className="close-btn" onClick={() => setSelected(null)}><X size={22} /></button>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <button className="btn btn-outline btn-sm" onClick={() => openPreview(selected)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Eye size={14} /> Dokument
+                      </button>
+                      <button className="close-btn" onClick={() => setSelected(null)}><X size={22} /></button>
+                    </div>
                   </div>
 
                   {/* Items by interval */}
@@ -264,8 +298,15 @@ export default function Offers() {
                     </div>
                   )}
 
-                  {/* Signature area (only for sent proposals) */}
-                  {selected.status === 'sent' && (
+                  {/* Legacy invoice note */}
+                  {selected._legacy && (
+                    <div style={{ padding: '12px 16px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, color: '#f59e0b', fontSize: 13, marginBottom: 16 }}>
+                      Diese Offerte ist ein älteres Dokument. Für Fragen kontaktieren Sie uns bitte direkt.
+                    </div>
+                  )}
+
+                  {/* Signature area (only for sent proposals, not legacy) */}
+                  {selected.status === 'sent' && !selected._legacy && (
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
                       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
                         Bitte unterschreiben Sie hier, um die Offerte zu akzeptieren. Es werden automatisch ein Vertrag und die entsprechenden Rechnungen erstellt.
@@ -307,6 +348,8 @@ export default function Offers() {
           </div>
         )}
       </AnimatePresence>
+
+      {previewDoc && <PortalDocumentPreview doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
 
       <style>{`
         .portal-offers { display: flex; flex-direction: column; gap: 36px; }

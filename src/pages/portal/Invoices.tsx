@@ -10,11 +10,14 @@ import {
   FileText,
   Plus,
   X,
-  Trash2
+  Trash2,
+  Eye,
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import StripePaymentModal from '../../components/StripePaymentModal';
+import { PortalDocumentPreview } from '../../components/PortalDocumentPreview';
+import type { PortalDoc } from '../../components/PortalDocumentPreview';
 
 interface Invoice {
   id: string;
@@ -36,7 +39,32 @@ const Invoices = () => {
   const { token, user } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<PortalDoc | null>(null);
   const [savedCard, setSavedCard] = useState<PaymentCard | null>(null);
+
+  const openInvoicePreview = (inv: Invoice) => {
+    const invAny = inv as any;
+    const items = Array.isArray(invAny.items)
+      ? invAny.items
+      : typeof invAny.items === 'string'
+        ? (() => { try { return JSON.parse(invAny.items); } catch { return []; } })()
+        : [];
+    const amt = parseFloat(String(inv.amount || 0));
+    setPreviewDoc({
+      type: 'invoice',
+      id: inv.id,
+      number: inv.invoice_number || `RE-${inv.id.substring(0, 8).toUpperCase()}`,
+      title: inv.title || 'Rechnung',
+      company_name: invAny.company_name,
+      status: inv.status,
+      total: amt,
+      subtotal: parseFloat((amt / 1.081).toFixed(2)),
+      tax_total: parseFloat((amt - amt / 1.081).toFixed(2)),
+      items,
+      created_at: inv.created_at,
+      due_date: inv.due_date,
+    });
+  };
   const [showCardModal, setShowCardModal] = useState(false);
   const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvc: '', holder: '' });
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
@@ -300,6 +328,13 @@ const Invoices = () => {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       className="btn-icon-small"
+                      title="Vorschau"
+                      onClick={() => openInvoicePreview(inv)}
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      className="btn-icon-small"
                       title="Rechnung PDF"
                       onClick={() => downloadInvoicePdf(inv)}
                     >
@@ -453,6 +488,8 @@ const Invoices = () => {
           onPaid={() => { setPayingInvoice(null); fetchInvoices(); }}
         />
       )}
+
+      {previewDoc && <PortalDocumentPreview doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
 
       <style>{`
         .portal-invoices { display: flex; flex-direction: column; gap: 40px; }

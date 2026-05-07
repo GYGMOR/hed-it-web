@@ -48,6 +48,7 @@ export default function Offers() {
   const [done, setDone] = useState<'signed' | 'rejected' | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<PortalDoc | null>(null);
+  const [signError, setSignError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const openPreview = (p: Proposal) => {
@@ -110,6 +111,7 @@ export default function Offers() {
     const canvas = canvasRef.current;
     const signatureData = canvas?.toDataURL('image/png');
     setSigning(true);
+    setSignError(null);
     try {
       const res = await fetch(`/api/portal/proposals/${selected.id}/sign`, {
         method: 'POST',
@@ -120,13 +122,18 @@ export default function Offers() {
       if (data.success) {
         setDone('signed');
         setTimeout(() => { setDone(null); setSelected(null); fetch_(); }, 3000);
+      } else {
+        setSignError(data.error || 'Signierung fehlgeschlagen. Bitte erneut versuchen.');
       }
+    } catch {
+      setSignError('Netzwerkfehler. Bitte erneut versuchen.');
     } finally { setSigning(false); }
   };
 
   const handleReject = async () => {
     if (!selected) return;
     setRejecting(true);
+    setSignError(null);
     try {
       const res = await fetch(`/api/portal/proposals/${selected.id}/reject`, {
         method: 'POST',
@@ -137,7 +144,11 @@ export default function Offers() {
       if (data.success) {
         setDone('rejected');
         setTimeout(() => { setDone(null); setSelected(null); fetch_(); }, 2500);
+      } else {
+        setSignError(data.error || 'Ablehnen fehlgeschlagen.');
       }
+    } catch {
+      setSignError('Netzwerkfehler. Bitte erneut versuchen.');
     } finally { setRejecting(false); }
   };
 
@@ -318,6 +329,11 @@ export default function Offers() {
                           style={{ display: 'block', width: '100%', cursor: 'crosshair' }}
                         />
                       </div>
+                      {signError && (
+                        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '10px 14px', color: '#dc2626', fontSize: 13 }}>
+                          {signError}
+                        </div>
+                      )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                         <div style={{ display: 'flex', gap: 10 }}>
                           <button className="btn btn-outline btn-sm" onClick={clearCanvas}>Leeren</button>

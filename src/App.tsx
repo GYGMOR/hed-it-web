@@ -21,6 +21,7 @@ import Contracts from './pages/portal/Contracts';
 import Tickets from './pages/portal/Tickets';
 import Invoices from './pages/portal/Invoices';
 import Settings from './pages/portal/Settings';
+import Offers from './pages/portal/Offers';
 import ProtectedRoute from './ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -58,6 +59,7 @@ const MainContent = ({ theme, toggleTheme }: { theme: 'dark' | 'light', toggleTh
           <Route element={<ProtectedRoute />}>
             <Route element={<PortalLayout />}>
               <Route path="/portal" element={<Dashboard />} />
+              <Route path="/portal/offers" element={<Offers />} />
               <Route path="/portal/contracts" element={<Contracts />} />
               <Route path="/portal/tickets" element={<Tickets />} />
               <Route path="/portal/invoices" element={<Invoices />} />

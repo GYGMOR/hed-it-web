@@ -1,14 +1,15 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Ticket, 
-  CreditCard, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  Ticket,
+  CreditCard,
+  Settings,
   LogOut,
   ChevronRight,
-  User
+  User,
+  ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,9 +24,10 @@ const PortalLayout = () => {
 
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/portal' },
+    { icon: <ClipboardList size={20} />, label: 'Offerten', path: '/portal/offers' },
     { icon: <FileText size={20} />, label: 'Verträge', path: '/portal/contracts' },
-    { icon: <Ticket size={20} />, label: 'Tickets', path: '/portal/tickets' },
     { icon: <CreditCard size={20} />, label: 'Rechnungen', path: '/portal/invoices' },
+    { icon: <Ticket size={20} />, label: 'Tickets', path: '/portal/tickets' },
     { icon: <Settings size={20} />, label: 'Einstellungen', path: '/portal/settings' },
   ];
 

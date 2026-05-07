@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CreditCard, 
@@ -51,6 +52,138 @@ const Invoices = () => {
       console.error('Failed to load saved card', e);
     }
   }, [CARD_STORAGE_KEY]);
+
+  const downloadInvoicePdf = (inv: Invoice) => {
+    try {
+      const doc = new jsPDF();
+      const W = 210;
+      const H = 297;
+      const invNum = inv.invoice_number || `RE-${inv.id.substring(0, 8).toUpperCase()}`;
+
+      // Header
+      doc.setFillColor(30, 41, 59);
+      doc.rect(0, 0, W, 48, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(24);
+      doc.text('HED-IT', 20, 22);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text('Web & Marketing Solutions', 20, 30);
+      doc.text('info@hed-it.ch  ·  www.hed-it.ch', 20, 36);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text('RECHNUNG', W - 20, 22, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Nr: ${invNum}`, W - 20, 30, { align: 'right' });
+      doc.text(`Datum: ${new Date(inv.created_at).toLocaleDateString('de-CH')}`, W - 20, 36, { align: 'right' });
+
+      // Title
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(inv.title || 'Rechnung', 20, 62);
+
+      // Details
+      let y = 74;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text('RECHNUNGSDETAILS', 20, y);
+      y += 4;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(20, y, W - 20, y);
+      y += 8;
+
+      const statusLabel = inv.status === 'paid' ? 'Bezahlt' : inv.status === 'overdue' ? 'Überfällig' : 'Offen';
+      const rows = [
+        ['Rechnungsnummer', invNum],
+        ['Rechnungsdatum', new Date(inv.created_at).toLocaleDateString('de-CH')],
+        ['Fällig am', inv.due_date ? new Date(inv.due_date).toLocaleDateString('de-CH') : '-'],
+        ['Status', statusLabel],
+      ];
+      rows.forEach(([label, value]) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(label + ':', 20, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 41, 59);
+        doc.text(String(value), 78, y);
+        y += 9;
+      });
+
+      // Amount box
+      y += 10;
+      doc.setFillColor(248, 250, 252);
+      doc.rect(20, y, W - 40, 36, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(inv.title || 'Dienstleistung', 26, y + 10);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(26, y + 16, W - 26, y + 16);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text('Zwischensumme', 26, y + 24);
+      doc.text('MwSt (8.1%)', 26, y + 30);
+      const amount = parseFloat(String(inv.amount || 0));
+      const tax = amount * 0.081;
+      doc.setTextColor(30, 41, 59);
+      doc.text(`CHF ${(amount - tax).toFixed(2)}`, W - 26, y + 24, { align: 'right' });
+      doc.text(`CHF ${tax.toFixed(2)}`, W - 26, y + 30, { align: 'right' });
+
+      y += 44;
+      doc.setFillColor(30, 41, 59);
+      doc.rect(20, y, W - 40, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('GESAMTBETRAG (CHF)', 26, y + 13);
+      doc.setFontSize(14);
+      doc.text(`CHF ${amount.toFixed(2)}`, W - 26, y + 13, { align: 'right' });
+
+      // Payment info
+      y += 30;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text('ZAHLUNGSDETAILS', 20, y);
+      y += 4;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, y, W - 20, y);
+      y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 41, 59);
+      doc.text('Zahlbar an: HED-IT Joel Hediger', 20, y);
+      y += 6;
+      doc.text('IBAN: CH00 0000 0000 0000 0000 0', 20, y);
+      y += 6;
+      doc.text(`Verwendungszweck: ${invNum}`, 20, y);
+
+      // Footer
+      doc.setFillColor(30, 41, 59);
+      doc.rect(0, H - 18, W, 18, 'F');
+      doc.setTextColor(148, 163, 184);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text('HED-IT Joel Hediger  ·  Web & Marketing Solutions  ·  info@hed-it.ch  ·  www.hed-it.ch', W / 2, H - 10, { align: 'center' });
+      doc.text('Zahlbar netto innert 30 Tagen  ·  Gerichtsstand: Schweiz', W / 2, H - 5, { align: 'center' });
+
+      doc.save(`Rechnung_${invNum}.pdf`);
+    } catch (err) {
+      console.error('Invoice PDF error:', err);
+      alert('Fehler beim Erstellen des PDFs.');
+    }
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -163,10 +296,10 @@ const Invoices = () => {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button 
-                      className="btn-icon-small" 
+                    <button
+                      className="btn-icon-small"
                       title="Rechnung PDF"
-                      onClick={() => window.open(`/api/invoices/${inv.id}/pdf`, '_blank')}
+                      onClick={() => downloadInvoicePdf(inv)}
                     >
                       <Download size={16} />
                     </button>

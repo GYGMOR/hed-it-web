@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, 
@@ -233,22 +234,129 @@ const Contracts = () => {
     }
   };
 
-  const downloadPdf = async (id: string) => {
+  const downloadPdf = (id: string) => {
+    const contract = contracts.find(c => c.id === id) || detailContract;
+    if (!contract) return;
     try {
-      const res = await fetch(`/api/portal/contracts/${id}/pdf`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const doc = new jsPDF();
+      const W = 210;
+      const H = 297;
+      const contractNum = contract.contract_number || 'CON-' + contract.id.substring(0, 8).toUpperCase();
+
+      // Header
+      doc.setFillColor(30, 41, 59);
+      doc.rect(0, 0, W, 48, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(24);
+      doc.text('HED-IT', 20, 22);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text('Web & Marketing Solutions', 20, 30);
+      doc.text('info@hed-it.ch  ·  www.hed-it.ch', 20, 36);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      doc.text('DIENSTLEISTUNGSVERTRAG', W - 20, 22, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Nr: ${contractNum}`, W - 20, 30, { align: 'right' });
+      doc.text(`Datum: ${new Date(contract.date).toLocaleDateString('de-CH')}`, W - 20, 36, { align: 'right' });
+
+      // Title
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(contract.name || contract.title || 'Dienstleistungsvertrag', 20, 62);
+
+      // Details section
+      let y = 74;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text('VERTRAGSDETAILS', 20, y);
+      y += 4;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(20, y, W - 20, y);
+      y += 8;
+
+      const billingLabel = contract.payment_cycle === 'monthly' ? 'Monatlich' :
+        contract.payment_cycle === 'yearly' ? 'Jährlich' :
+        contract.payment_cycle === 'quarterly' ? 'Quartalsweise' :
+        contract.payment_cycle === 'one_time' ? 'Einmalig' :
+        (contract.payment_cycle || 'Monatlich');
+
+      const rows = [
+        ['Vertragsnummer', contractNum],
+        ['Status', contract.status === 'active' ? 'Aktiv' : contract.status === 'pending_signature' ? 'Ausstehende Unterschrift' : contract.status],
+        ['Abrechnungszyklus', billingLabel],
+        ['Betrag', `${Number(contract.monthly_value || 0).toFixed(2)} CHF / Monat`],
+        ['Vertragsdatum', new Date(contract.date).toLocaleDateString('de-CH')],
+      ];
+
+      rows.forEach(([label, value]) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(label + ':', 20, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 41, 59);
+        doc.text(String(value), 78, y);
+        y += 9;
       });
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Vertrag_${id.substring(0,8)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
+
+      // Divider
+      y += 4;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, y, W - 20, y);
+      y += 10;
+
+      // Service description box
+      doc.setFillColor(248, 250, 252);
+      doc.rect(20, y, W - 40, 30, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 41, 59);
+      doc.text('GEBUCHTER SERVICE', 26, y + 8);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(contract.name || contract.title || 'Dienstleistungsvertrag', 26, y + 18);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(0, 150, 130);
+      doc.text(`${Number(contract.monthly_value || 0).toFixed(2)} CHF / Monat`, W - 26, y + 18, { align: 'right' });
+
+      // Signature lines
+      const sigY = H - 72;
+      doc.setDrawColor(30, 41, 59);
+      doc.setLineWidth(0.3);
+      doc.line(20, sigY, 88, sigY);
+      doc.line(112, sigY, 180, sigY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text('HED-IT Joel Hediger – Auftragnehmer', 20, sigY + 5);
+      doc.text('Auftraggeber', 112, sigY + 5);
+      doc.text('Ort / Datum: _____________________', 20, sigY + 12);
+      doc.text('Ort / Datum: _____________________', 112, sigY + 12);
+
+      // Footer
+      doc.setFillColor(30, 41, 59);
+      doc.rect(0, H - 18, W, 18, 'F');
+      doc.setTextColor(148, 163, 184);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.text('HED-IT Joel Hediger  ·  Web & Marketing Solutions  ·  info@hed-it.ch  ·  www.hed-it.ch', W / 2, H - 10, { align: 'center' });
+      doc.text('Alle Preise in CHF  ·  Gerichtsstand: Schweiz', W / 2, H - 5, { align: 'center' });
+
+      doc.save(`Vertrag_${contractNum}.pdf`);
     } catch (err) {
-      alert('Fehler beim Laden des PDFs.');
+      console.error('PDF error:', err);
+      alert('Fehler beim Erstellen des PDFs.');
     }
   };
 

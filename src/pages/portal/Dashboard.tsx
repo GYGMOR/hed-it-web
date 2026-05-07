@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -6,19 +6,40 @@ import {
   Clock, 
   AlertCircle, 
   ArrowUpRight,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
 
+  const [dashData, setDashData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch('/api/portal/dashboard', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) setDashData(data.data);
+      } catch (err) {
+        console.error('Failed to fetch dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, [token]);
+
   const stats = [
-    { label: 'Aktive Verträge', value: '2', icon: <CheckCircle2 className="text-success" />, trend: '+1 neu' },
-    { label: 'Offene Tickets', value: '1', icon: <Clock className="text-primary" />, trend: 'In Bearbeitung' },
-    { label: 'Offene Rechnungen', value: '0', icon: <AlertCircle className="text-muted" />, trend: 'Alles bezahlt' },
+    { label: 'Aktive Verträge', value: loading ? '–' : String(dashData?.activeContracts || 0), icon: <CheckCircle2 className="text-success" />, trend: dashData?.activeContracts > 0 ? `${dashData.activeContracts} aktiv` : 'Keine' },
+    { label: 'Offene Tickets', value: loading ? '–' : String(dashData?.openTickets || 0), icon: <Clock className="text-primary" />, trend: dashData?.openTickets > 0 ? 'In Bearbeitung' : 'Alles erledigt' },
+    { label: 'Offene Rechnungen', value: loading ? '–' : String(dashData?.openInvoices || 0), icon: <AlertCircle className="text-muted" />, trend: dashData?.openInvoices > 0 ? 'Ausstehend' : 'Alles bezahlt' },
   ];
 
   return (

@@ -279,7 +279,8 @@ const Contracts = () => {
         </div>
       )}
 
-      {!loading && availableUpgrades.length > 0 && (
+      {/* Only show upgrades & calculator if user has at least one contract (base package) */}
+      {!loading && contracts.length > 0 && availableUpgrades.length > 0 && (
         <section className="suggested-upgrades">
           <h2 style={{ fontSize: 24, marginBottom: 24 }}>Empfohlene Upgrades</h2>
           <div className="upgrades-horizontal">
@@ -297,8 +298,8 @@ const Contracts = () => {
         </section>
       )}
 
-      {/* Service Calculator */}
-      {!loading && (
+      {/* Service Calculator - only show if user has at least one contract */}
+      {!loading && contracts.length > 0 && (
         <section className="portal-calculator">
           <div className="calc-header-row">
             <div>

@@ -18,7 +18,9 @@ import {
   Users,
   User,
   Calculator,
-  Send
+  Send,
+  ExternalLink,
+  FileSignature
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
@@ -28,7 +30,7 @@ interface Contract {
   contract_number?: string;
   name?: string;
   title?: string;
-  status: 'active' | 'expired' | 'pending';
+  status: 'active' | 'expired' | 'pending' | 'pending_signature';
   date: string;
   monthly_value?: string | number;
   payment_cycle?: string;
@@ -143,6 +145,89 @@ const Contracts = () => {
     }
   };
 
+  const [signingContract, setSigningContract] = useState<any>(null);
+  const signatureCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  const startDrawing = (e: any) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: any) => {
+    if (!isDrawing) return;
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => setIsDrawing(false);
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const handleSignContract = async () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas || !signingContract) return;
+    const signatureData = canvas.toDataURL('image/png');
+
+    try {
+      const res = await fetch(`/api/portal/contracts/${signingContract.id}/sign`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ signatureData })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Vertrag erfolgreich signiert! Die erste Rechnung wurde erstellt.');
+        setSigningContract(null);
+        fetchContracts();
+      }
+    } catch (err) {
+      alert('Fehler beim Signieren.');
+    }
+  };
+
+  const downloadPdf = async (id: string) => {
+    try {
+      const res = await fetch(`/api/portal/contracts/${id}/pdf`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vertrag_${id.substring(0,8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Fehler beim Laden des PDFs.');
+    }
+  };
+
   const availableUpgrades = ALL_UPGRADES.filter(up => 
     !contracts.some(c => c && (c.name || c.title || '').toLowerCase().includes((up.name || '').toLowerCase().split(' ')[0].toLowerCase()))
   );
@@ -249,7 +334,7 @@ const Contracts = () => {
                   )}
                 </div>
               </div>
-              <div className="contract-footer">
+              <div className="contract-footer" style={{ flexWrap: 'wrap', gap: '10px' }}>
                 <div className="price-tag">
                   {contract.source === 'contract' ? (
                     <>
@@ -260,22 +345,73 @@ const Contracts = () => {
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>PDF Dokument</span>
                   )}
                 </div>
-                <button 
-                  className="btn-icon"
-                  onClick={() => {
-                    if (contract.source === 'file' && contract.path) {
-                      window.open(contract.path, '_blank');
-                    } else {
-                      // Original logic for generated contract PDFs if exists
-                      alert('Vertrags-PDF wird generiert...');
-                    }
-                  }}
-                >
-                  <Download size={18} />
-                </button>
+                <div style={{ display: 'flex', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+                  {contract.source === 'file' ? (
+                    <button className="btn btn-outline btn-sm" onClick={() => window.open(contract.path, '_blank')}>
+                      <ExternalLink size={14} /> Öffnen
+                    </button>
+                  ) : (
+                    <>
+                      {contract.status === 'pending_signature' ? (
+                        <button className="btn btn-primary btn-sm" onClick={() => setSigningContract(contract)} style={{ padding: '4px 12px', fontSize: 13 }}>
+                          <FileSignature size={14} style={{ marginRight: 4 }} /> Signieren
+                        </button>
+                      ) : (
+                        <button className="btn btn-outline btn-sm" onClick={() => downloadPdf(contract.id)}>
+                          <Download size={14} style={{ marginRight: 4 }} /> PDF
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {signingContract && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
+          <motion.div 
+            className="modal-content"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{ maxWidth: 500, width: '95%' }}
+          >
+            <div className="modal-header">
+              <h3 style={{ fontSize: 20 }}>Vertrag signieren</h3>
+              <button className="close-btn" onClick={() => setSigningContract(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+            </div>
+            <div className="modal-body" style={{ padding: '20px 0' }}>
+              <p style={{ marginBottom: 15, fontSize: 14, color: 'var(--text-muted)' }}>
+                Bitte unterschreiben Sie im Feld unten, um den Vertrag <strong>{signingContract.name || signingContract.title}</strong> rechtlich bindend zu akzeptieren.
+              </p>
+              
+              <div style={{ border: '2px solid var(--border)', borderRadius: 12, overflow: 'hidden', backgroundColor: '#fff' }}>
+                <canvas 
+                  ref={signatureCanvasRef}
+                  width={460}
+                  height={200}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseOut={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  style={{ cursor: 'crosshair', display: 'block', width: '100%' }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
+                <button className="btn btn-text btn-sm" onClick={clearSignature}>Leeren</button>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn btn-secondary" onClick={() => setSigningContract(null)}>Abbrechen</button>
+                  <button className="btn btn-primary" onClick={handleSignContract}>Signatur bestätigen</button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
 

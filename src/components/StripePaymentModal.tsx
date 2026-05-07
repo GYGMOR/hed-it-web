@@ -129,25 +129,28 @@ export default function StripePaymentModal({ invoice, token, onClose, onPaid }: 
 
   const init = useCallback(async () => {
     try {
-      // Load Stripe publishable key
-      const pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string;
-      if (!pubKey || pubKey.includes('REPLACE')) {
+      // Fetch publishable key + create PaymentIntent in parallel
+      const [configRes, piRes] = await Promise.all([
+        fetch('/api/stripe/config', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/stripe/payment-intent', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoice_id: invoice.id }),
+        }),
+      ]);
+
+      const config = await configRes.json();
+      const data = await piRes.json();
+
+      if (!piRes.ok) throw new Error(data.error || 'Server-Fehler');
+      if (!config.publishable_key || config.publishable_key.includes('REPLACE')) {
         setLoadError('Stripe ist noch nicht konfiguriert. Bitte kontaktieren Sie den Support.');
         setLoading(false);
         return;
       }
 
-      // Create PaymentIntent on server
-      const res = await fetch('/api/stripe/payment-intent', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoice_id: invoice.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Server-Fehler');
-
       setClientSecret(data.client_secret);
-      setStripePromise(loadStripe(pubKey));
+      setStripePromise(loadStripe(config.publishable_key));
     } catch (err: any) {
       setLoadError(err.message || 'Fehler beim Laden der Zahlungsseite.');
     } finally {

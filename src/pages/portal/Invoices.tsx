@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CreditCard, 
-  Download, 
-  CheckCircle2, 
-  Clock, 
+import {
+  CreditCard,
+  Download,
+  CheckCircle2,
+  Clock,
   AlertCircle,
   FileText,
   Plus,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
+import StripePaymentModal from '../../components/StripePaymentModal';
 
 interface Invoice {
   id: string;
@@ -34,6 +35,7 @@ interface PaymentCard {
 const Invoices = () => {
   const { token, user } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
   const [savedCard, setSavedCard] = useState<PaymentCard | null>(null);
   const [showCardModal, setShowCardModal] = useState(false);
   const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvc: '', holder: '' });
@@ -304,10 +306,10 @@ const Invoices = () => {
                       <Download size={16} />
                     </button>
                     {(inv.status === 'open' || inv.status === 'sent') && (
-                      <button 
-                        className="btn btn-primary" 
+                      <button
+                        className="btn btn-primary"
                         style={{ padding: '6px 12px', fontSize: 11, height: 'auto' }}
-                        onClick={() => alert('Demo-Zahlung wird gestartet (TWINT / Apple Pay)...')}
+                        onClick={() => setPayingInvoice(inv)}
                       >
                         Bezahlen
                       </button>
@@ -442,6 +444,15 @@ const Invoices = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {payingInvoice && token && (
+        <StripePaymentModal
+          invoice={payingInvoice}
+          token={token}
+          onClose={() => setPayingInvoice(null)}
+          onPaid={() => { setPayingInvoice(null); fetchInvoices(); }}
+        />
+      )}
 
       <style>{`
         .portal-invoices { display: flex; flex-direction: column; gap: 40px; }

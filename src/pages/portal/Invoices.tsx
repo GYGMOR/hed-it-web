@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   CreditCard,
   Download,
@@ -8,9 +7,6 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Plus,
-  X,
-  Trash2,
   Eye,
 } from 'lucide-react';
 
@@ -29,18 +25,11 @@ interface Invoice {
   title: string;
 }
 
-interface PaymentCard {
-  number: string;
-  expiry: string;
-  holder: string;
-}
-
 const Invoices = () => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
   const [previewDoc, setPreviewDoc] = useState<PortalDoc | null>(null);
-  const [savedCard, setSavedCard] = useState<PaymentCard | null>(null);
 
   const openInvoicePreview = (inv: Invoice) => {
     const invAny = inv as any;
@@ -65,23 +54,6 @@ const Invoices = () => {
       due_date: inv.due_date,
     });
   };
-  const [showCardModal, setShowCardModal] = useState(false);
-  const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvc: '', holder: '' });
-  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
-
-  const CARD_STORAGE_KEY = `hed_payment_card_${user?.id || 'unknown'}`;
-
-  // Load saved card from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(CARD_STORAGE_KEY);
-      if (stored) {
-        setSavedCard(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error('Failed to load saved card', e);
-    }
-  }, [CARD_STORAGE_KEY]);
 
   const downloadInvoicePdf = (inv: Invoice) => {
     try {
@@ -231,65 +203,6 @@ const Invoices = () => {
     fetchInvoices();
   }, []);
 
-  const formatCardNumber = (value: string) => {
-    const nums = value.replace(/\D/g, '').substring(0, 16);
-    return nums.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const formatExpiry = (value: string) => {
-    const nums = value.replace(/\D/g, '').substring(0, 4);
-    if (nums.length >= 3) return nums.substring(0, 2) + '/' + nums.substring(2);
-    return nums;
-  };
-
-  const validateCard = () => {
-    const errors: Record<string, string> = {};
-    const rawNumber = cardForm.number.replace(/\s/g, '');
-    
-    if (rawNumber.length < 13 || rawNumber.length > 16) {
-      errors.number = 'Kartennummer muss 13-16 Ziffern haben';
-    }
-    if (!cardForm.expiry || cardForm.expiry.length < 5) {
-      errors.expiry = 'Gültiges Format: MM/YY';
-    }
-    if (!cardForm.cvc || cardForm.cvc.length < 3) {
-      errors.cvc = 'CVC muss 3-4 Ziffern haben';
-    }
-    if (!cardForm.holder.trim()) {
-      errors.holder = 'Name ist erforderlich';
-    }
-    
-    setCardErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSaveCard = () => {
-    if (!validateCard()) return;
-    
-    const rawNumber = cardForm.number.replace(/\s/g, '');
-    const card: PaymentCard = {
-      number: rawNumber.substring(rawNumber.length - 4),
-      expiry: cardForm.expiry,
-      holder: cardForm.holder.trim()
-    };
-    
-    localStorage.setItem(CARD_STORAGE_KEY, JSON.stringify(card));
-    setSavedCard(card);
-    setShowCardModal(false);
-    setCardForm({ number: '', expiry: '', cvc: '', holder: '' });
-    setCardErrors({});
-  };
-
-  const handleRemoveCard = () => {
-    localStorage.removeItem(CARD_STORAGE_KEY);
-    setSavedCard(null);
-  };
-
-  const getCardBrand = (last4: string) => {
-    // Simple heuristic for demo
-    return 'Kreditkarte';
-  };
-
   return (
     <div className="portal-invoices">
       <header className="section-header">
@@ -365,120 +278,22 @@ const Invoices = () => {
         <div className="section-title">
           <h3>Zahlungsmethode</h3>
         </div>
-        
-        {savedCard ? (
-          <div className="payment-card">
-            <div className="card-info">
-              <div className="card-icon"><CreditCard size={24} /></div>
-              <div>
-                <p className="card-type">{getCardBrand(savedCard.number)} ({savedCard.holder})</p>
-                <p className="card-num">•••• •••• •••• {savedCard.number}</p>
-                <p className="card-expiry">Gültig bis: {savedCard.expiry}</p>
-              </div>
-            </div>
-            <div className="card-actions">
-              <button className="btn btn-outline" onClick={() => { setShowCardModal(true); setCardForm({ number: '', expiry: '', cvc: '', holder: '' }); }}>Ändern</button>
-              <button className="btn-icon-remove" onClick={handleRemoveCard} title="Entfernen"><Trash2 size={18} /></button>
-            </div>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '28px 32px', display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(0,242,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CreditCard size={26} color="var(--primary)" />
           </div>
-        ) : (
-          <div className="payment-card empty-payment">
-            <div className="card-info">
-              <div className="card-icon empty"><CreditCard size={24} /></div>
-              <div>
-                <p className="card-type">Keine Zahlungsmethode hinterlegt</p>
-                <p className="card-num-hint">Hinterlegen Sie eine Kreditkarte für automatische Zahlungen.</p>
-              </div>
-            </div>
-            <button className="btn btn-primary" onClick={() => setShowCardModal(true)}>
-              <Plus size={18} /> Hinzufügen
-            </button>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 700, fontSize: 16, margin: '0 0 4px' }}>Bezahlung über Stripe</p>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>
+              Zahlungen werden sicher über Stripe abgewickelt. Klicken Sie bei einer offenen Rechnung auf <strong>«Bezahlen»</strong> um Karte, Apple Pay, Google Pay oder Klarna zu verwenden.
+            </p>
           </div>
-        )}
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', flexShrink: 0 }}>
+            <div style={{ fontSize: 20 }}>🔒</div>
+            <div>SSL verschlüsselt</div>
+          </div>
+        </div>
       </div>
-
-      {/* Card Modal */}
-      <AnimatePresence>
-        {showCardModal && (
-          <div className="modal-overlay" onClick={() => setShowCardModal(false)}>
-            <motion.div 
-              className="modal-content card-modal"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-header">
-                <h3>Zahlungsmethode hinzufügen</h3>
-                <button className="close-btn" onClick={() => setShowCardModal(false)}><X size={20} /></button>
-              </div>
-
-              <div className="card-form">
-                <div className="form-group">
-                  <label>Karteninhaber</label>
-                  <input 
-                    type="text" 
-                    placeholder="Max Mustermann"
-                    value={cardForm.holder}
-                    onChange={(e) => setCardForm({ ...cardForm, holder: e.target.value })}
-                    className={cardErrors.holder ? 'error' : ''}
-                  />
-                  {cardErrors.holder && <span className="field-error">{cardErrors.holder}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label>Kartennummer</label>
-                  <input 
-                    type="text" 
-                    placeholder="1234 5678 9012 3456"
-                    value={cardForm.number}
-                    onChange={(e) => setCardForm({ ...cardForm, number: formatCardNumber(e.target.value) })}
-                    maxLength={19}
-                    className={cardErrors.number ? 'error' : ''}
-                  />
-                  {cardErrors.number && <span className="field-error">{cardErrors.number}</span>}
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Ablaufdatum</label>
-                    <input 
-                      type="text" 
-                      placeholder="MM/YY"
-                      value={cardForm.expiry}
-                      onChange={(e) => setCardForm({ ...cardForm, expiry: formatExpiry(e.target.value) })}
-                      maxLength={5}
-                      className={cardErrors.expiry ? 'error' : ''}
-                    />
-                    {cardErrors.expiry && <span className="field-error">{cardErrors.expiry}</span>}
-                  </div>
-                  <div className="form-group">
-                    <label>CVC</label>
-                    <input 
-                      type="text" 
-                      placeholder="123"
-                      value={cardForm.cvc}
-                      onChange={(e) => setCardForm({ ...cardForm, cvc: e.target.value.replace(/\D/g, '').substring(0, 4) })}
-                      maxLength={4}
-                      className={cardErrors.cvc ? 'error' : ''}
-                    />
-                    {cardErrors.cvc && <span className="field-error">{cardErrors.cvc}</span>}
-                  </div>
-                </div>
-
-                <div className="secure-note">
-                  <CheckCircle2 size={14} />
-                  <span>Ihre Daten werden sicher gespeichert.</span>
-                </div>
-
-                <button className="btn btn-primary w-full" onClick={handleSaveCard} style={{ width: '100%', justifyContent: 'center', marginTop: '16px' }}>
-                  Karte speichern
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {payingInvoice && token && (
         <StripePaymentModal

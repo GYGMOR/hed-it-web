@@ -248,10 +248,18 @@ const Invoices = () => {
                     </button>
                     <button
                       className="btn-icon-small"
-                      title="Rechnung PDF"
+                      title="Rechnung PDF (lokal)"
                       onClick={() => downloadInvoicePdf(inv)}
                     >
                       <Download size={16} />
+                    </button>
+                    <button
+                      className="btn-icon-small"
+                      title="QR-Rechnung (Swiss Standard)"
+                      onClick={() => window.open(`/api/invoices/${inv.id}/document?token=${token}`, '_blank')}
+                      style={{ fontSize: 11 }}
+                    >
+                      🇨🇭
                     </button>
                     {(inv.status === 'open' || inv.status === 'sent') && (
                       <button

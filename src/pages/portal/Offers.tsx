@@ -210,6 +210,10 @@ export default function Offers() {
                     <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); openPreview(p); }} title="Dokument anzeigen">
                       <Eye size={14} />
                     </button>
+                    <button className="btn btn-outline btn-sm" title="Als PDF herunterladen (QR-Rechnung)"
+                      onClick={(e) => { e.stopPropagation(); window.open(`/api/proposals/${p.id}/document?token=${token}`, '_blank'); }}>
+                      🇨🇭
+                    </button>
                     <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); setSelected(p); }}>
                       Details <ChevronRight size={14} />
                     </button>

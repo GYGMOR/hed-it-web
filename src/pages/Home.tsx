@@ -86,13 +86,6 @@ const Home = () => {
     { icon: <Shield size={32} color="#00ff88" />, title: 'Cyber Security', desc: 'Schutz Ihrer digitalen Assets durch modernste Sicherheits-Audits und Monitoring.', color: '#00ff88' },
   ];
 
-  const process = [
-    { num: '01', title: 'Beratung', desc: 'Kostenloses Erstgespräch — wir analysieren Ihre Anforderungen und Ziele ohne Druck.', color: 'var(--primary)' },
-    { num: '02', title: 'Konzept & Offerte', desc: 'Detaillierter Projektplan mit klaren Meilensteinen und transparenten Festpreisen.', color: 'var(--secondary)' },
-    { num: '03', title: 'Entwicklung', desc: 'Agile Umsetzung mit regelmässigen Updates — Sie sehen den Fortschritt in Echtzeit.', color: '#00ff88' },
-    { num: '04', title: 'Launch & Support', desc: 'Professioneller Deployment, Übergabe mit Dokumentation und langfristiger Betreuung.', color: '#f59e0b' },
-  ];
-
   const compare = [
     { feature: 'Persönlicher Ansprechpartner', hedit: true, agentur: null, plattform: false },
     { feature: 'Schweizer Qualitätsstandards', hedit: true, agentur: null, plattform: false },
@@ -271,28 +264,6 @@ const Home = () => {
                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>{c.icon}</div>
                 <h3 style={{ fontSize: 24, marginBottom: 16 }}>{c.title}</h3>
                 <p className="item-desc" style={{ fontSize: 15 }}>{c.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Process Timeline ── */}
-      <section className="section">
-        <div className="container">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 64 }}>
-            <span className="hero-tag">Unser Prozess</span>
-            <h2 style={{ fontSize: 42, marginTop: 16, marginBottom: 16 }}>So arbeiten wir</h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 520, margin: '0 auto' }}>Transparent, strukturiert und immer mit Ihnen im Dialog — von der ersten Idee bis zum Live-Gang.</p>
-          </motion.div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, position: 'relative' }}>
-            {process.map((step, i) => (
-              <motion.div key={i} className="calc-item" style={{ padding: 36, position: 'relative', overflow: 'hidden' }}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
-                <div style={{ fontSize: 72, fontWeight: 900, color: step.color, opacity: 0.08, position: 'absolute', top: -10, right: 16, lineHeight: 1, userSelect: 'none' }}>{step.num}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: step.color, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Schritt {step.num}</div>
-                <h3 style={{ fontSize: 20, marginBottom: 12, fontWeight: 700 }}>{step.title}</h3>
-                <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.7 }}>{step.desc}</p>
               </motion.div>
             ))}
           </div>

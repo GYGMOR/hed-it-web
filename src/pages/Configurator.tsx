@@ -412,7 +412,7 @@ const Configurator = () => {
                           ) : isSuccess ? (
                             <><Check className="w-5 h-5 mr-2" /> Gesendet!</>
                           ) : (
-                            <><Send className="w-5 h-5 mr-2" /> Verbindlich anfragen</>
+                            <><Send className="w-5 h-5 mr-2" /> Unverbindlich anfragen</>
                           )}
                         </button>
                       </div>

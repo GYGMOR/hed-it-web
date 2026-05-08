@@ -166,6 +166,71 @@ const Home = () => {
         </div>
       </header>
 
+      {/* ── Animated Showcase / "Mini Videos" ── */}
+      <section className="section" style={{ paddingTop: 40, paddingBottom: 40, overflow: 'hidden' }}>
+        <div className="container">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 48 }}>
+            <span className="hero-tag">Live · Showcase</span>
+            <h2 style={{ fontSize: 38, marginTop: 16, marginBottom: 12 }}>Was wir für Sie bauen</h2>
+            <p style={{ color: 'var(--text-muted)', maxWidth: 480, margin: '0 auto' }}>Von der Idee zur fertigen Webseite — persönlich, lokal, schweizweit.</p>
+          </motion.div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+            {[
+              { label: 'Web-Entwicklung', tag: 'React · TypeScript', color: 'var(--primary)', lines: ['Startseite', 'Über uns', 'Leistungen', 'Kontakt'], accent: '#00f2ff' },
+              { label: 'Cloud & Hosting', tag: 'Hetzner · M365', color: 'var(--secondary)', lines: ['SSL-Zertifikat', 'Auto-Backup', 'Monitoring', 'Support'], accent: '#8b5cf6' },
+              { label: 'E-Commerce', tag: 'Shop · Zahlung', color: '#10b981', lines: ['Produkte', 'Warenkorb', 'Stripe', 'Bestellungen'], accent: '#10b981' },
+            ].map((card, ci) => (
+              <motion.div key={ci}
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: ci * 0.12 }}
+                style={{ background: 'var(--bg-card)', border: `1px solid var(--border)`, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+                {/* Browser chrome */}
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid var(--border)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {['#ef4444','#f59e0b','#10b981'].map((c,i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+                  <div style={{ flex: 1, height: 20, background: 'rgba(255,255,255,0.05)', borderRadius: 6, marginLeft: 8 }} />
+                </div>
+                {/* Animated content */}
+                <div style={{ padding: '24px 20px', minHeight: 180, position: 'relative' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: card.color, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>{card.tag}</div>
+                  {card.lines.map((line, li) => (
+                    <motion.div key={li}
+                      initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+                      transition={{ delay: ci * 0.1 + li * 0.08 + 0.3 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: card.accent, flexShrink: 0 }} />
+                      <div style={{ height: 10, borderRadius: 4, background: `linear-gradient(90deg, ${card.accent}22, ${card.accent}08)`, flex: li % 2 === 0 ? 0.7 : 0.5 }} />
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{line}</span>
+                    </motion.div>
+                  ))}
+                  {/* Floating badge */}
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: ci * 0.5 }}
+                    style={{ position: 'absolute', bottom: 20, right: 16, background: card.accent, borderRadius: 100, padding: '6px 14px', fontSize: 11, fontWeight: 800, color: '#000', boxShadow: `0 4px 20px ${card.accent}44` }}>
+                    {['✓ Live', '✓ Sicher', '✓ Fertig'][ci]}
+                  </motion.div>
+                </div>
+                {/* Bottom bar */}
+                <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>{card.label}</span>
+                  <div style={{ fontSize: 11, color: card.color, fontWeight: 700, background: `${card.accent}15`, borderRadius: 6, padding: '3px 8px' }}>ab CHF {['1\'500','189 /J','8\'000'][ci]}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Floating badges row */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 32 }}>
+            {['✓ Aus einer Hand', '✓ Persönlich · Lokal', '✓ Festpreisgarantie', '✓ Schweizer Qualität', '✓ Schnelle Umsetzung'].map((b, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 100, padding: '8px 18px', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>
+                {b}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Tech Marquee ── */}
       <div style={{ overflow: 'hidden', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '18px 0', background: 'var(--bg-section)' }}>
         <div style={{ display: 'flex', animation: 'marquee 28s linear infinite', width: 'max-content', gap: 0 }}>

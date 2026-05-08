@@ -1,362 +1,324 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Check, Minus, Plus, Send, Download, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
-import { Calculator as CalcIcon, Download, CheckCircle2, User, Users, Building2 } from 'lucide-react';
-
-type ClientType = 'business' | 'association' | 'private';
-
-interface ProjectType {
-  id: string;
-  name: string;
-  price: number;
-  desc: string;
-}
-
-interface DesignComplexity {
-  id: string;
-  name: string;
-  price: number;
-  desc: string;
-}
-
-interface Feature {
-  id: string;
-  name: string;
-  price: number;
-  desc: string;
-}
-
+/* ── Data ── */
 const CLIENT_TYPES = [
-  { id: 'business', name: 'Unternehmen', icon: <Building2 />, desc: 'B2B / B2C Unternehmen & Agenturen', discount: 0 },
-  { id: 'association', name: 'Verein', icon: <Users />, desc: 'Vereine & NPOs (-50%)', discount: 0.5 },
-  { id: 'private', name: 'Privatperson', icon: <User />, desc: 'Private Projekte & Portfolios (-70%)', discount: 0.7 },
+  { id: 'business', label: 'Unternehmen / KMU', desc: 'Firma, Einzelunternehmen, GmbH, AG, etc.', discount: 0, badge: 'Standardpreise' },
+  { id: 'association', label: 'Verein / Organisation', desc: 'Verein, Stiftung, Genossenschaft, NGO.', discount: 0.25, badge: '-25%' },
+  { id: 'private', label: 'Privatperson', desc: 'Persönliches Projekt, Portfolio, Blog.', discount: 0.50, badge: '-50%' },
 ];
 
-const PROJECT_TYPES: ProjectType[] = [
-  { id: 'lp', name: 'Landing Page', price: 1500, desc: 'Einseitige Webseite für Produkt oder Dienstleistung' },
-  { id: 'corp', name: 'Unternehmenswebseite', price: 3500, desc: 'Mehrseitige Website mit Über uns, Services, Kontakt' },
-  { id: 'shop', name: 'Webshop', price: 8000, desc: 'Online-Shop mit Produktverwaltung und Zahlungsabwicklung' },
-  { id: 'app', name: 'Web Applikation', price: 12000, desc: 'Massgeschneiderte Web-App für Geschäftsprozesse' },
-  { id: 'mobile', name: 'Mobile App', price: 15000, desc: 'Native iOS/Android App oder plattformübergreifend' },
+const WEBSITE_TYPES = [
+  { id: 'lp', label: 'Landing Page', desc: '1–3 Seiten · Fokus auf 1 Aktion (Termin, Anfrage, Verkauf).', price: 1500 },
+  { id: 'corp', label: 'Unternehmenswebseite', desc: '5–15 Seiten · Über uns, Leistungen, Referenzen, Kontakt, etc.', price: 3500 },
+  { id: 'app', label: 'Web-Applikation', desc: 'Massgeschneidert: Portal, Buchung, internes Tool, etc.', price: 8000, prefix: 'ab ' },
+  { id: 'shop', label: 'E-Commerce / Webshop', desc: 'Inkl. Produkte, Warenkorb, Zahlung, Bestellverwaltung.', price: 12000 },
 ];
 
-const DESIGN_LEVELS: DesignComplexity[] = [
-  { id: 'template', name: 'Template Basiert', price: 0, desc: 'Bewährte Vorlagen, schnell und kostengünstig' },
-  { id: 'custom', name: 'Individuelles Design', price: 2000, desc: 'Einzigartiges Design nach Ihren Wünschen' },
-  { id: 'premium', name: 'Premium / 3D', price: 4500, desc: 'Hochwertige Animationen und 3D-Elemente' },
+const EXTRAS = [
+  { id: 'logo', label: 'Logo-Design', desc: 'Professionelles Logo inkl. verschiedenen Formaten.', price: 800 },
+  { id: 'texts', label: 'Professionelle Texte', desc: 'Packende, zielgruppengerechte Texterstellung.', price: 400 },
+  { id: 'photos', label: 'Professionelle Fotos', desc: 'Fotoshooting vor Ort inkl. Bildbearbeitung.', price: 900 },
+  { id: 'drone', label: 'Drohnenaufnahmen', desc: 'Beeindruckende Luftaufnahmen (Foto/Video).', price: 650 },
+  { id: 'cms', label: 'CMS — Inhalte selbst pflegen', desc: 'Sie ändern Texte, Bilder, News selbst.', price: 1400 },
+  { id: 'anim', label: 'Custom-Animationen', desc: 'Bewegtbild, Scroll-Effekte, individuelle Hover-Zustände.', price: 350 },
+  { id: 'seo', label: 'SEO Pro — sichtbar bei Google', desc: 'Keyword-Recherche, On-Page-SEO, Schema.org, Sitemap.', price: 800 },
+  { id: 'api', label: 'API-Anbindung an Drittsystem', desc: 'CRM, Buchhaltung, Newsletter-Tool, etc.', price: 1500 },
+  { id: 'cookie', label: 'Cookie-Banner & DSGVO/revDSG', desc: 'Konformes Consent-Tool inkl. Datenschutzerklärung.', price: 150 },
+  { id: 'legal', label: 'Impressum & Datenschutz erstellen', desc: 'Rechtssichere Erstellung der Rechtstexte (Schweiz & EU).', price: 250 },
 ];
 
-const FEATURES: Feature[] = [
-  { id: 'cms', name: 'CMS Integration', price: 1600, desc: 'Inhalte selbst bearbeiten ohne Programmierkenntnisse' },
-  { id: 'seo', name: 'SEO Optimierung', price: 1200, desc: 'Bessere Sichtbarkeit in Google & Co.' },
-  { id: 'lang', name: 'Mehrsprachigkeit', price: 2100, desc: 'Website in mehreren Sprachen verfügbar' },
-  { id: 'stats', name: 'Erweiterte Analyse', price: 800, desc: 'Detaillierte Besucherstatistiken und Conversion-Tracking' },
-  { id: 'news', name: 'Newsletter Setup', price: 1200, desc: 'E-Mail Marketing Integration mit Anmeldeformular' },
+const HOSTING = [
+  { id: 'none', label: 'Kein Hosting', desc: 'Sie hosten selbst.', price: 0, unit: '/ Jahr' },
+  { id: 'managed', label: 'Hosting', desc: 'Inkl. Node.js, Backup, SSL, CH-Domain, E-Mail Adressen', price: 189, unit: '/ Jahr' },
 ];
+
+const MAINTENANCE = [
+  { id: 'none', label: 'Kein Wartungsvertrag', desc: 'Updates auf Anfrage.', price: 0, unit: '/ Mt.' },
+  { id: 'basic', label: 'Basic', desc: 'Kleine Anpassungen (15 Minuten / Mt.), Verfügbarkeitsmonitoring', price: 49, unit: '/ Mt.' },
+  { id: 'pro', label: 'Pro', desc: 'Anpassungen (2h / Mt.), Performance- und Verfügbarkeitsmonitoring, Reaktionszeit 4h', price: 210, unit: '/ Mt.' },
+];
+
+const chf = (n: number) => n.toLocaleString('de-CH');
 
 const Calculator = () => {
-  const [clientType, setClientType] = useState<ClientType>('business');
-  const [projectType, setProjectType] = useState<string>('lp');
-  const [designLevel, setDesignLevel] = useState<string>('template');
-  const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set());
-  const navigate = useNavigate();
+  const [client, setClient] = useState('business');
+  const [site, setSite] = useState('lp');
+  const [langs, setLangs] = useState(1);
+  const [extras, setExtras] = useState<Set<string>>(new Set());
+  const [hosting, setHosting] = useState('managed');
+  const [maintenance, setMaintenance] = useState('basic');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
-
-  const toggleFeature = (id: string) => {
-    const newFeatures = new Set(selectedFeatures);
-    if (newFeatures.has(id)) newFeatures.delete(id);
-    else newFeatures.add(id);
-    setSelectedFeatures(newFeatures);
+  const toggleExtra = (id: string) => {
+    const s = new Set(extras);
+    s.has(id) ? s.delete(id) : s.add(id);
+    setExtras(s);
   };
 
-  const totals = useMemo(() => {
-    const basePrice = PROJECT_TYPES.find(p => p.id === projectType)?.price || 0;
-    const designPrice = DESIGN_LEVELS.find(d => d.id === designLevel)?.price || 0;
-    const featurePrice = Array.from(selectedFeatures).reduce((sum, id) => {
-      return sum + (FEATURES.find(f => f.id === id)?.price || 0);
-    }, 0);
+  const price = useMemo(() => {
+    const discount = CLIENT_TYPES.find(c => c.id === client)?.discount || 0;
+    const base = WEBSITE_TYPES.find(w => w.id === site)?.price || 0;
+    const langExtra = Math.max(0, langs - 1) * 600;
+    const extrasTotal = Array.from(extras).reduce((s, id) => s + (EXTRAS.find(e => e.id === id)?.price || 0), 0);
+    const hostingPrice = HOSTING.find(h => h.id === hosting)?.price || 0;
+    const maintPrice = MAINTENANCE.find(m => m.id === maintenance)?.price || 0;
+    const sub = (base + langExtra + extrasTotal) * (1 - discount);
+    return { sub: Math.round(sub), hosting: hostingPrice, maintenance: maintPrice, discount };
+  }, [client, site, langs, extras, hosting, maintenance]);
 
-    const subtotal = basePrice + designPrice + featurePrice;
-    const discountFactor = CLIENT_TYPES.find(c => c.id === clientType)?.discount || 0;
-    const discountAmount = subtotal * discountFactor;
-    const total = subtotal - discountAmount;
-
-    return { subtotal, discountAmount, total };
-  }, [clientType, projectType, designLevel, selectedFeatures]);
-
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(22);
-    doc.text('hed-it.ch | Kosten-Schätzung', 20, 20);
-    doc.setFontSize(10);
-    doc.text(`Datum: ${new Date().toLocaleDateString('de-CH')}`, 20, 30);
-    doc.text(`Kundentyp: ${CLIENT_TYPES.find(c => c.id === clientType)?.name}`, 20, 35);
-    
-    doc.line(20, 45, 190, 45);
-    let y = 55;
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Gewählte Optionen:', 20, y);
-    y += 10;
-    doc.setFont('helvetica', 'normal');
-    
-    const p = PROJECT_TYPES.find(pt => pt.id === projectType);
-    doc.text(`${p?.name}`, 20, y);
-    doc.text(`CHF ${p?.price.toLocaleString()}`, 160, y);
-    y += 7;
-
-    const d = DESIGN_LEVELS.find(dl => dl.id === designLevel);
-    doc.text(`Design: ${d?.name}`, 20, y);
-    doc.text(`CHF ${d?.price.toLocaleString()}`, 160, y);
-    y += 7;
-
-    selectedFeatures.forEach(id => {
-      const f = FEATURES.find(ft => ft.id === id);
-      doc.text(`Feature: ${f?.name}`, 20, y);
-      doc.text(`CHF ${f?.price.toLocaleString()}`, 160, y);
-      y += 6;
+  const lineItems = useMemo(() => {
+    const items: { label: string; price: number }[] = [];
+    const w = WEBSITE_TYPES.find(w => w.id === site);
+    const discount = CLIENT_TYPES.find(c => c.id === client)?.discount || 0;
+    if (w) items.push({ label: w.label, price: Math.round(w.price * (1 - discount)) });
+    if (langs > 1) items.push({ label: `${langs - 1} weitere Sprache${langs > 2 ? 'n' : ''}`, price: Math.round((langs - 1) * 600 * (1 - discount)) });
+    extras.forEach(id => {
+      const e = EXTRAS.find(e => e.id === id);
+      if (e) items.push({ label: e.label, price: Math.round(e.price * (1 - discount)) });
     });
+    return items;
+  }, [client, site, langs, extras]);
 
-    y += 10;
-    doc.line(20, y, 190, y);
-    y += 10;
-    
-    doc.text('Zwischentotal:', 20, y);
-    doc.text(`CHF ${totals.subtotal.toLocaleString()}`, 160, y);
-    y += 7;
-    
-    if (totals.discountAmount > 0) {
-      doc.setTextColor(255, 0, 0);
-      doc.text(`Rabatt (${clientType === 'association' ? '50%' : '70%'}):`, 20, y);
-      doc.text(`- CHF ${totals.discountAmount.toLocaleString()}`, 160, y);
-      y += 7;
-      doc.setTextColor(0, 0, 0);
-    }
-    
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Geschätztes Total:', 20, y + 5);
-    doc.text(`CHF ${totals.total.toLocaleString()}`, 160, y + 5);
-    
-    doc.save(`hed-it-kalkulation.pdf`);
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20); doc.text('hed-it.ch — Offerte', 20, 20);
+    doc.setFontSize(10); doc.text(`Datum: ${new Date().toLocaleDateString('de-CH')}`, 20, 32);
+    doc.line(20, 38, 190, 38);
+    let y = 48;
+    doc.setFont('helvetica', 'bold'); doc.text('Positionen', 20, y); doc.text('CHF', 170, y); y += 8;
+    doc.setFont('helvetica', 'normal');
+    lineItems.forEach(li => { doc.text(li.label, 20, y); doc.text(chf(li.price), 170, y); y += 7; });
+    doc.line(20, y, 190, y); y += 8;
+    doc.setFont('helvetica', 'bold'); doc.text(`TOTAL (einmalig)`, 20, y); doc.text(`CHF ${chf(price.sub)}`, 170, y); y += 10;
+    if (price.hosting) { doc.setFont('helvetica', 'normal'); doc.text(`+ Hosting CHF ${chf(price.hosting)} / Jahr`, 20, y); y += 7; }
+    if (price.maintenance) { doc.text(`+ Wartung CHF ${chf(price.maintenance)} / Monat`, 20, y); }
+    doc.save('hed-it-offerte.pdf');
   };
+
+  const submit = async () => {
+    if (!name || !email) { formRef.current?.scrollIntoView({ behavior: 'smooth' }); return; }
+    setSending(true);
+    await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, subject: 'Kalkulator-Anfrage', message: `Website-Typ: ${WEBSITE_TYPES.find(w => w.id === site)?.label}\nSprachen: ${langs}\nTotal: CHF ${chf(price.sub)}\nHosting: CHF ${chf(price.hosting)}/Jahr\nWartung: CHF ${chf(price.maintenance)}/Mt.` }),
+    }).catch(() => {});
+    setSending(false); setSent(true);
+  };
+
+  /* ── Shared step header ── */
+  const Step = ({ num, title }: { num: string; title: string }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+      <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,242,255,0.12)', border: '1.5px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: 'var(--primary)', flexShrink: 0 }}>{num}</span>
+      <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>{title}</h3>
+    </div>
+  );
+
+  /* ── Radio row ── */
+  const Radio = ({ checked, onClick, label, desc, right }: { checked: boolean; onClick: () => void; label: string; desc: string; right?: React.ReactNode }) => (
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderRadius: 14, border: `1.5px solid ${checked ? 'var(--primary)' : 'var(--border)'}`, background: checked ? 'rgba(0,242,255,0.04)' : 'var(--bg-card)', cursor: 'pointer', transition: 'all 0.2s', marginBottom: 10 }}>
+      <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${checked ? 'var(--primary)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
+        {checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--primary)' }} />}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-main)' }}>{label}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{desc}</div>
+      </div>
+      {right && <div style={{ flexShrink: 0 }}>{right}</div>}
+    </div>
+  );
+
+  /* ── Checkbox ── */
+  const Checkbox = ({ checked, onClick, label, desc, price: p }: { checked: boolean; onClick: () => void; label: string; desc: string; price: number }) => (
+    <div onClick={onClick} style={{ padding: '16px 18px', borderRadius: 14, border: `1.5px solid ${checked ? 'var(--primary)' : 'var(--border)'}`, background: checked ? 'rgba(0,242,255,0.04)' : 'var(--bg-card)', cursor: 'pointer', transition: 'all 0.2s' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${checked ? 'var(--primary)' : 'var(--border)'}`, background: checked ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, transition: 'all 0.15s' }}>
+            {checked && <Check size={11} color="#000" strokeWidth={3} />}
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-main)' }}>{label}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.4 }}>{desc}</div>
+          </div>
+        </div>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>+ CHF {chf(p)}</span>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="page-calculator">
-      <section className="hero" style={{ paddingBottom: '40px' }}>
+    <div>
+      {/* Hero */}
+      <section className="hero" style={{ paddingBottom: 40 }}>
         <div className="container text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="hero-title">Website-<span className="premium-gradient">Kosten-Rechner</span></h1>
-            <p className="hero-desc" style={{ margin: '0 auto' }}>Erhalten Sie eine erste Kostenschätzung für Ihr Projekt.</p>
+            <span className="hero-tag">Kostenlos & unverbindlich</span>
+            <h1 className="hero-title" style={{ marginTop: 16 }}>Ihr <span className="premium-gradient">Festpreis-Kalkulator</span></h1>
+            <p className="hero-desc" style={{ margin: '0 auto' }}>Konfigurieren Sie Ihr Projekt — Preis wird live berechnet. Keine versteckten Kosten, Festpreisgarantie.</p>
           </motion.div>
         </div>
       </section>
 
-      <section className="section section-dark">
+      <section className="section section-dark" style={{ paddingTop: 0 }}>
         <div className="container">
-          <div className="calc-grid">
-            <div className="calc-main">
-              
-              {/* 1. Sind Sie... */}
-              <div className="calc-section">
-                <h3 className="section-step">1. Sind Sie...</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                  {CLIENT_TYPES.map(c => (
-                    <div 
-                      key={c.id} 
-                      className={`client-card ${clientType === c.id ? 'active' : ''}`}
-                      onClick={() => setClientType(c.id as ClientType)}
-                    >
-                      <div className="client-icon">{c.icon}</div>
-                      <h4>{c.name}</h4>
-                      <p>{c.desc}</p>
-                    </div>
+          <div className="calc-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 32, alignItems: 'start' }}>
+
+            {/* ── Left: Steps ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+              {/* Step 01 */}
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+                <Step num="01" title="Sind Sie..." />
+                {CLIENT_TYPES.map(c => (
+                  <Radio key={c.id} checked={client === c.id} onClick={() => setClient(c.id)} label={c.label} desc={c.desc}
+                    right={<span style={{ fontSize: 13, fontWeight: 700, color: c.discount > 0 ? '#10b981' : 'var(--text-muted)' }}>{c.badge}</span>} />
+                ))}
+              </motion.div>
+
+              {/* Step 02 */}
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <Step num="02" title="Welche Art von Webseite?" />
+                {WEBSITE_TYPES.map(w => (
+                  <Radio key={w.id} checked={site === w.id} onClick={() => setSite(w.id)} label={w.label} desc={w.desc}
+                    right={<span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{w.prefix || ''}CHF {chf(w.price)}</span>} />
+                ))}
+              </motion.div>
+
+              {/* Step 03 */}
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                <Step num="03" title="Wie viele Sprachen?" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1.5px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+                    <button onClick={() => setLangs(Math.max(1, langs - 1))} style={{ width: 44, height: 44, background: 'var(--bg-card)', border: 'none', color: 'var(--text-main)', cursor: 'pointer', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={16} /></button>
+                    <span style={{ width: 56, textAlign: 'center', fontSize: 18, fontWeight: 700, color: 'var(--text-main)' }}>{langs}</span>
+                    <button onClick={() => setLangs(Math.min(6, langs + 1))} style={{ width: 44, height: 44, background: 'var(--bg-card)', border: 'none', color: 'var(--text-main)', cursor: 'pointer', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={16} /></button>
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Erste Sprache inklusive · jede weitere <strong style={{ color: 'var(--primary)' }}>+ CHF 600</strong></span>
+                </div>
+              </motion.div>
+
+              {/* Step 04 */}
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <Step num="04" title="Zusatzleistungen" />
+                <div className="extras-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+                  {EXTRAS.map(e => (
+                    <Checkbox key={e.id} checked={extras.has(e.id)} onClick={() => toggleExtra(e.id)} label={e.label} desc={e.desc} price={e.price} />
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* 2. Projekttyp */}
-              <div className="calc-section" style={{ marginTop: '64px' }}>
-                <h3 className="section-step">2. Projekttyp</h3>
-                <div className="list-options">
-                  {PROJECT_TYPES.map(p => (
-                    <div 
-                      key={p.id} 
-                      className={`list-item ${projectType === p.id ? 'active' : ''}`}
-                      onClick={() => setProjectType(p.id)}
-                    >
-                      <div className="radio-circle"></div>
-                      <div className="item-info">
-                        <span className="item-title">{p.name}</span>
-                        <span className="item-subtitle">{p.desc}</span>
-                      </div>
-                      <span className="item-cost">+ {p.price.toFixed(2)} chf Einmalig</span>
+              {/* Step 05 */}
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                <Step num="05" title="Hosting" />
+                {HOSTING.map(h => (
+                  <Radio key={h.id} checked={hosting === h.id} onClick={() => setHosting(h.id)} label={h.label} desc={h.desc}
+                    right={<span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>CHF {chf(h.price)} {h.unit}</span>} />
+                ))}
+              </motion.div>
 
-                    </div>
-                  ))}
+              {/* Step 06 */}
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                <Step num="06" title="Wartung" />
+                {MAINTENANCE.map(m => (
+                  <Radio key={m.id} checked={maintenance === m.id} onClick={() => setMaintenance(m.id)} label={m.label} desc={m.desc}
+                    right={<span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>CHF {chf(m.price)} {m.unit}</span>} />
+                ))}
+              </motion.div>
+
+              {/* Contact Form */}
+              <motion.div ref={formRef} className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+                <Step num="07" title="Ihre Kontaktdaten" />
+                <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  <input value={name} onChange={e => setName(e.target.value)} placeholder="Vor- und Nachname *" style={{ padding: '12px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 14 }} />
+                  <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Telefon (optional)" style={{ padding: '12px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 14 }} />
                 </div>
-              </div>
-
-              {/* 3. Design Komplexität */}
-              <div className="calc-section" style={{ marginTop: '64px' }}>
-                <h3 className="section-step">3. Design Komplexität</h3>
-                <div className="list-options">
-                  {DESIGN_LEVELS.map(d => (
-                    <div 
-                      key={d.id} 
-                      className={`list-item ${designLevel === d.id ? 'active' : ''}`}
-                      onClick={() => setDesignLevel(d.id)}
-                    >
-                      <div className="radio-circle"></div>
-                      <div className="item-info">
-                        <span className="item-title">{d.name}</span>
-                        <span className="item-subtitle">{d.desc}</span>
-                      </div>
-                      <span className="item-cost">{d.price === 0 ? 'Inklusive' : `+ ${d.price.toFixed(2)} chf Einmalig`}</span>
-
-                    </div>
-                  ))}
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="E-Mail Adresse *" type="email" style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 14, boxSizing: 'border-box', marginBottom: 16 }} />
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button onClick={submit} disabled={sending || sent} className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', gap: 8, display: 'flex', alignItems: 'center' }}>
+                    {sent ? <><Check size={16} /> Anfrage gesendet!</> : sending ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Sendet...</> : <><Send size={16} /> Festpreis-Angebot anfordern</>}
+                  </button>
+                  <button onClick={downloadPDF} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Download size={16} /> PDF
+                  </button>
                 </div>
-              </div>
-
-              {/* 4. Zusätzliche Features */}
-              <div className="calc-section" style={{ marginTop: '64px' }}>
-                <h3 className="section-step">4. Zusätzliche Features</h3>
-                <div className="list-options">
-                  {FEATURES.map(f => (
-                    <div 
-                      key={f.id} 
-                      className={`list-item checkbox ${selectedFeatures.has(f.id) ? 'active' : ''}`}
-                      onClick={() => toggleFeature(f.id)}
-                    >
-                      <div className="check-box"></div>
-                      <div className="item-info">
-                        <span className="item-title">{f.name}</span>
-                        <span className="item-subtitle">{f.desc}</span>
-                      </div>
-                      <span className="item-cost">+ {f.price.toFixed(2)} chf Einmalig</span>
-
-                    </div>
-                  ))}
-                </div>
-              </div>
+                {sent && <p style={{ fontSize: 13, color: '#10b981', marginTop: 12, textAlign: 'center' }}>Wir melden uns innerhalb von 24 Stunden mit Ihrem Festpreis-Angebot.</p>}
+              </motion.div>
             </div>
 
-            <aside className="calc-sidebar">
-              <div className="summary-card sticky-card">
-                <h3 style={{ marginBottom: '24px' }}>Geschätzte Kosten:</h3>
-                
-                <div className="summary-details">
-                   <div className="summary-row">
-                      <span>Basis & Design</span>
-                      <span>{(PROJECT_TYPES.find(p => p.id === projectType)!.price + DESIGN_LEVELS.find(d => d.id === designLevel)!.price).toFixed(2)} chf Einmalig</span>
-                   </div>
-                   {selectedFeatures.size > 0 && (
-                     <div className="summary-row">
-                        <span>Zusatz-Features</span>
-                        <span>{Array.from(selectedFeatures).reduce((s, id) => s + FEATURES.find(f => f.id === id)!.price, 0).toFixed(2)} chf Einmalig</span>
-                     </div>
-                   )}
-                   {totals.discountAmount > 0 && (
-                     <div className="summary-row discount">
-                        <span>Rabatt ({clientType === 'association' ? '50%' : '70%'})</span>
-                        <span>- {totals.discountAmount.toFixed(2)} chf Einmalig</span>
-                     </div>
-                   )}
+            {/* ── Right: Sticky Price Panel ── */}
+            <div className="calc-sticky" style={{ position: 'sticky', top: 100 }}>
+              <motion.div className="glass-card" style={{ padding: 28 }} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                  <div style={{ height: 2, flex: 1, background: 'var(--primary)' }} />
+                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: 'var(--primary)', textTransform: 'uppercase' }}>IHR FESTPREIS</span>
                 </div>
 
-
-                <div className="final-total">
-                   <span className="total-label">Total Schätzung</span>
-                   <span className="total-value">{totals.total.toFixed(2)} chf Einmalig</span>
-
-
+                <div style={{ fontSize: 48, fontWeight: 900, color: 'var(--text-main)', lineHeight: 1, margin: '8px 0 4px' }}>
+                  CHF {chf(price.sub)}
                 </div>
 
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '20px' }}>
-                  Dies ist eine unverbindliche Schätzung. Die finalen Kosten hängen von Ihren spezifischen Anforderungen ab.
-                </p>
+                {price.hosting > 0 && (
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 2 }}>+ CHF {chf(price.hosting)} / Jahr Hosting</div>
+                )}
+                {price.maintenance > 0 && (
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>+ CHF {chf(price.maintenance)} / Monat Wartung</div>
+                )}
 
-                <button 
-                  className="btn btn-primary" 
-                  style={{ width: '100%', marginTop: '32px', justifyContent: 'center' }}
-                  onClick={() => {
-                    navigate('/configurator', {
-                      state: {
-                        total: totals.total,
-                        clientType: CLIENT_TYPES.find(c => c.id === clientType)?.name,
-                        projectTypeName: PROJECT_TYPES.find(p => p.id === projectType)?.name,
-                        designLevel: DESIGN_LEVELS.find(d => d.id === designLevel)?.name,
-                        features: Array.from(selectedFeatures).map(id => FEATURES.find(f => f.id === id)?.name)
-                      }
-                    });
-                  }}
-                >
-                  Weiter
+                {price.discount > 0 && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '4px 10px', marginBottom: 16 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981' }}>{Math.round(price.discount * 100)}% Rabatt inklusive</span>
+                  </div>
+                )}
+
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {lineItems.map((li, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-muted)' }}>
+                      <span style={{ flex: 1, marginRight: 8 }}>{li.label}</span>
+                      <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>CHF {chf(li.price)}</span>
+                    </div>
+                  ))}
+                  {lineItems.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Keine Positionen</div>}
+                </div>
+
+                <button onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 20, display: 'flex', gap: 8 }}>
+                  <Send size={15} /> Festpreis-Angebot anfordern
                 </button>
 
-              </div>
-            </aside>
+                <a href="tel:+41415623416" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, padding: '12px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-muted)', textDecoration: 'none', fontSize: 14, fontWeight: 600, transition: 'all 0.2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--text-muted)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
+                  +41 41 562 34 16
+                </a>
+
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 16, lineHeight: 1.6 }}>
+                  Festpreis-Garantie: Was hier steht, gilt. Keine versteckten Stunden, keine Nachforderungen. Erstgespräch immer kostenlos.
+                </p>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
       <style>{`
-        .calc-section { background: var(--bg-card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); }
-        .section-step { margin-bottom: 24px; font-size: 20px; }
-        
-        .client-card { 
-          padding: 32px; 
-          background: rgba(255,255,255,0.02); 
-          border: 1px solid var(--border); 
-          border-radius: 16px; 
-          text-align: center; 
-          cursor: pointer;
-          transition: all 0.3s ease;
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 960px) {
+          .calc-two-col { grid-template-columns: 1fr !important; }
+          .calc-sticky { position: relative !important; top: 0 !important; }
         }
-        .client-card:hover { border-color: var(--primary); background: rgba(0,242,255,0.05); }
-        .client-card.active { border-color: var(--primary); background: var(--primary); color: #000; }
-        .client-card.active p { color: rgba(0,0,0,0.7); }
-        .client-icon { font-size: 32px; margin-bottom: 16px; display: flex; justify-content: center; }
-        .client-card h4 { margin-bottom: 8px; }
-        .client-card p { font-size: 12px; color: var(--text-muted); }
-
-        .list-options { display: flex; flex-direction: column; gap: 12px; }
-        .list-item { 
-          display: flex; 
-          align-items: center; 
-          padding: 20px; 
-          background: rgba(255,255,255,0.02); 
-          border: 1px solid var(--border); 
-          border-radius: 12px; 
-          cursor: pointer;
-          transition: 0.2s;
+        @media (max-width: 600px) {
+          .extras-grid { grid-template-columns: 1fr !important; }
+          .contact-grid { grid-template-columns: 1fr !important; }
         }
-        .list-item:hover { background: rgba(255,255,255,0.05); }
-        .list-item.active { border-color: var(--primary); background: rgba(0,242,255,0.03); }
-        
-        .radio-circle { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 50%; margin-right: 20px; position: relative; }
-        .list-item.active .radio-circle { border-color: var(--primary); }
-        .list-item.active .radio-circle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: var(--primary); border-radius: 50%; }
-
-        .check-box { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 4px; margin-right: 20px; }
-        .list-item.active .check-box { border-color: var(--primary); background: var(--primary); }
-
-        .item-info { flex: 1; display: flex; flex-direction: column; }
-        .item-title { font-weight: 700; font-size: 16px; }
-        .item-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-        .item-cost { font-weight: 800; color: var(--primary); font-size: 15px; }
-
-        .summary-details { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-muted); }
-        .summary-row.discount { color: #ff4d4d; font-weight: 700; }
-        .final-total { border-top: 1px solid var(--border); padding-top: 24px; display: flex; flex-direction: column; gap: 4px; }
-        .total-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
-        .total-value { font-size: 32px; font-weight: 900; color: var(--primary); }
-        
-        .sticky-card { position: sticky; top: 120px; }
       `}</style>
     </div>
   );

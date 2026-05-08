@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Minus, Plus, Send, Download, Loader2 } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 
 /* ── Data ── */
 const CLIENT_TYPES = [
@@ -55,7 +54,6 @@ const Calculator = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [showForm, setShowForm] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
   const toggleExtra = (id: string) => {
@@ -89,28 +87,152 @@ const Calculator = () => {
   }, [client, site, langs, extras]);
 
   const downloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(20); doc.text('hed-it.ch — Offerte', 20, 20);
-    doc.setFontSize(10); doc.text(`Datum: ${new Date().toLocaleDateString('de-CH')}`, 20, 32);
-    doc.line(20, 38, 190, 38);
-    let y = 48;
-    doc.setFont('helvetica', 'bold'); doc.text('Positionen', 20, y); doc.text('CHF', 170, y); y += 8;
-    doc.setFont('helvetica', 'normal');
-    lineItems.forEach(li => { doc.text(li.label, 20, y); doc.text(chf(li.price), 170, y); y += 7; });
-    doc.line(20, y, 190, y); y += 8;
-    doc.setFont('helvetica', 'bold'); doc.text(`TOTAL (einmalig)`, 20, y); doc.text(`CHF ${chf(price.sub)}`, 170, y); y += 10;
-    if (price.hosting) { doc.setFont('helvetica', 'normal'); doc.text(`+ Hosting CHF ${chf(price.hosting)} / Jahr`, 20, y); y += 7; }
-    if (price.maintenance) { doc.text(`+ Wartung CHF ${chf(price.maintenance)} / Monat`, 20, y); }
-    doc.save('hed-it-offerte.pdf');
+    const pw = window.open('', '_blank', 'width=900,height=750');
+    if (!pw) { alert('Bitte Popup-Blocker deaktivieren.'); return; }
+
+    const today = new Date();
+    const ref = `KAL-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    const validUntil = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const fmt2 = (n: number) => n.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const clientLabel = CLIENT_TYPES.find(c => c.id === client)?.label || '';
+    const discountInfo = price.discount > 0
+      ? `<div style="color:#16a34a;font-weight:600;font-size:12px;margin-top:6px">${Math.round(price.discount * 100)}% Rabatt (${clientLabel})</div>`
+      : '';
+
+    const itemsHtml = lineItems.map(li => `
+      <tr>
+        <td>
+          <div style="font-weight:600;color:#1e293b">${li.label}</div>
+          <div style="font-size:10px;color:#0891b2;font-weight:700;margin-top:2px;text-transform:uppercase">EINMALIG</div>
+        </td>
+        <td style="text-align:right;color:#1e293b">1</td>
+        <td style="text-align:right;color:#1e293b">CHF ${fmt2(li.price)}</td>
+        <td style="text-align:right;font-weight:700;color:#1e293b">CHF ${fmt2(li.price)}</td>
+      </tr>`).join('');
+
+    const recurringRows = [
+      price.hosting > 0 ? `
+        <tr>
+          <td>
+            <div style="font-weight:600;color:#1e293b">Hosting</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">Inkl. Node.js, Backup, SSL, CH-Domain, E-Mail</div>
+            <div style="font-size:10px;color:#0891b2;font-weight:700;margin-top:3px;text-transform:uppercase">JÄHRLICH</div>
+          </td>
+          <td style="text-align:right;color:#1e293b">1</td>
+          <td style="text-align:right;color:#1e293b">CHF ${fmt2(price.hosting)} / Jahr</td>
+          <td style="text-align:right;font-weight:700;color:#1e293b">CHF ${fmt2(price.hosting)} / Jahr</td>
+        </tr>` : '',
+      price.maintenance > 0 ? `
+        <tr>
+          <td>
+            <div style="font-weight:600;color:#1e293b">${MAINTENANCE.find(m => m.id === maintenance)?.label || 'Wartung'}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">${MAINTENANCE.find(m => m.id === maintenance)?.desc || ''}</div>
+            <div style="font-size:10px;color:#0891b2;font-weight:700;margin-top:3px;text-transform:uppercase">MONATLICH</div>
+          </td>
+          <td style="text-align:right;color:#1e293b">1</td>
+          <td style="text-align:right;color:#1e293b">CHF ${fmt2(price.maintenance)} / Mt.</td>
+          <td style="text-align:right;font-weight:700;color:#1e293b">CHF ${fmt2(price.maintenance)} / Mt.</td>
+        </tr>` : '',
+    ].filter(Boolean).join('');
+
+    const hasRecurring = price.hosting > 0 || price.maintenance > 0;
+
+    pw.document.write(`<!DOCTYPE html>
+<html><head>
+  <title>OFFERTE ${ref}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#fff;color:#1e293b;padding:48px 40px;max-width:800px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;padding-bottom:24px;border-bottom:3px solid #0f172a}
+    .logo{font-size:28px;font-weight:900;color:#0f172a;letter-spacing:-1px}.logo span{color:#06b6d4}
+    .logo-sub{font-size:11px;color:#64748b;margin-top:4px}
+    .logo-contact{font-size:12px;color:#64748b;margin-top:6px}
+    .doc-title{font-size:22px;font-weight:800;letter-spacing:2px;text-align:right}
+    .doc-num{font-size:13px;color:#64748b;margin-top:4px;text-align:right}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:40px}
+    .label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+    .meta{display:flex;gap:10px;margin-bottom:4px;font-size:13px}
+    .meta-l{color:#64748b;min-width:80px}.meta-v{font-weight:600}
+    table{width:100%;border-collapse:collapse;margin-bottom:32px}
+    th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;padding:10px 12px;background:#f8fafc;border-bottom:2px solid #e2e8f0}
+    th:not(:first-child){text-align:right}
+    td{padding:14px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:top}
+    td:not(:first-child){text-align:right}
+    .section-sep td{padding:8px 12px;background:#f0f9ff;font-size:10px;font-weight:700;color:#0891b2;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #bae6fd}
+    .totals{border-top:2px solid #e2e8f0;padding-top:20px;max-width:300px;margin-left:auto;margin-bottom:32px}
+    .t-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#64748b}
+    .t-grand{display:flex;justify-content:space-between;padding:14px 0 0;margin-top:8px;border-top:2px solid #0f172a;font-size:18px;font-weight:800}
+    .t-grand span:last-child{color:#0891b2}
+    .notes{padding:16px;background:#f8fafc;border-radius:8px;font-size:13px;color:#475569;margin-bottom:32px}
+    .notes b{color:#1e293b;display:block;margin-bottom:6px}
+    .footer{padding-top:20px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center;line-height:1.8;margin-top:60px}
+    @media print{body{padding:20px 30px}}
+  </style>
+</head><body>
+  <div class="header">
+    <div>
+      <div class="logo">HED<span>-IT</span></div>
+      <div class="logo-sub">Web & Marketing Solutions</div>
+      <div class="logo-contact">info@hed-it.ch · www.hed-it.ch</div>
+    </div>
+    <div>
+      <div class="doc-title">OFFERTE</div>
+      <div class="doc-num">Ref. ${ref}</div>
+      <div class="doc-num">${today.toLocaleDateString('de-CH')}</div>
+    </div>
+  </div>
+  <div class="info-grid">
+    <div>
+      <div class="label">Empfänger</div>
+      <div style="font-weight:700;font-size:16px">${name || 'Interessent'}</div>
+      ${email ? `<div style="font-size:14px;color:#475569;margin-top:4px">${email}</div>` : ''}
+      ${phone ? `<div style="font-size:14px;color:#475569;margin-top:2px">${phone}</div>` : ''}
+      ${discountInfo}
+    </div>
+    <div>
+      <div class="label">Details</div>
+      <div class="meta"><span class="meta-l">Datum:</span><span class="meta-v">${today.toLocaleDateString('de-CH')}</span></div>
+      <div class="meta"><span class="meta-l">Gültig bis:</span><span class="meta-v">${validUntil.toLocaleDateString('de-CH')}</span></div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:50%">Beschreibung</th><th>Menge</th><th>Einzelpreis</th><th>Gesamt</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemsHtml}
+      ${hasRecurring ? `<tr class="section-sep"><td colspan="4">Wiederkehrende Leistungen</td></tr>` : ''}
+      ${recurringRows}
+    </tbody>
+  </table>
+  <div class="totals">
+    <div class="t-grand"><span>Einmalig (CHF):</span><span>CHF ${fmt2(price.sub)}</span></div>
+    ${price.hosting > 0 ? `<div class="t-row" style="margin-top:12px"><span>+ Hosting:</span><span>CHF ${fmt2(price.hosting)} / Jahr</span></div>` : ''}
+    ${price.maintenance > 0 ? `<div class="t-row"><span>+ Wartung:</span><span>CHF ${fmt2(price.maintenance)} / Mt.</span></div>` : ''}
+  </div>
+  <div class="notes"><b>Festpreis-Garantie</b>Was hier steht, gilt. Keine versteckten Stunden, keine Nachforderungen. Alle Preise in CHF inkl. MwSt (8.1%). Erstgespräch immer kostenlos.</div>
+  <div class="footer">
+    HED-IT Joel Hediger · Web & Marketing Solutions<br>
+    info@hed-it.ch · www.hed-it.ch · +41 41 562 34 16<br>
+    Alle Preise in CHF · Festpreisgarantie · Gerichtsstand: Schweiz
+  </div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),400)</script>
+</body></html>`);
+    pw.document.close();
   };
 
   const submit = async () => {
     if (!name || !email) { formRef.current?.scrollIntoView({ behavior: 'smooth' }); return; }
     setSending(true);
-    await fetch('/api/contact', {
+    await fetch('/api/public/inquiry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, phone, subject: 'Kalkulator-Anfrage', message: `Website-Typ: ${WEBSITE_TYPES.find(w => w.id === site)?.label}\nSprachen: ${langs}\nTotal: CHF ${chf(price.sub)}\nHosting: CHF ${chf(price.hosting)}/Jahr\nWartung: CHF ${chf(price.maintenance)}/Mt.` }),
+      body: JSON.stringify({
+        subject: 'Kalkulator-Anfrage',
+        details: `Name: ${name}\nE-Mail: ${email}${phone ? `\nTelefon: ${phone}` : ''}\n\nWebsite-Typ: ${WEBSITE_TYPES.find(w => w.id === site)?.label}\nSprachen: ${langs}\nTotal: CHF ${chf(price.sub)}\nHosting: CHF ${chf(price.hosting)}/Jahr\nWartung: CHF ${chf(price.maintenance)}/Mt.`,
+      }),
     }).catch(() => {});
     setSending(false); setSent(true);
   };

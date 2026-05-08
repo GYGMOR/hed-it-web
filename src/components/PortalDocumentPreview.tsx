@@ -47,13 +47,9 @@ export const PortalDocumentPreview = ({ doc, onClose }: Props) => {
     ? Number(doc.subtotal)
     : items.reduce((s: number, i: any) => s + (parseFloat(i.total_price) || 0), 0);
 
-  const taxTotal = doc.tax_total != null
-    ? Number(doc.tax_total)
-    : items.reduce((s: number, i: any) => s + (parseFloat(i.total_price) || 0) * ((parseFloat(i.tax_rate) || 8.1) / 100), 0);
-
   const discountPct = doc.discount_percent || 0;
   const discountAmt = subtotal * (discountPct / 100);
-  const total = doc.total || (subtotal - discountAmt + taxTotal);
+  const total = doc.total || (subtotal - discountAmt);
 
   const fmt = (n: number) => n.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -137,16 +133,14 @@ export const PortalDocumentPreview = ({ doc, onClose }: Props) => {
     <tbody>${itemsHtml}</tbody>
   </table>` : `<div style="padding:24px;text-align:center;color:#94a3b8;border:1px dashed #e2e8f0;border-radius:8px;margin-bottom:32px;font-size:13px">Keine Positionen vorhanden</div>`}
   <div class="totals">
-    <div class="t-row"><span>Zwischensumme:</span><span>CHF ${fmt(subtotal)}</span></div>
     ${discountPct > 0 ? `<div class="t-row" style="color:#16a34a;font-weight:600"><span>Rabatt (${discountPct}%):</span><span>−CHF ${fmt(discountAmt)}</span></div>` : ''}
-    <div class="t-row"><span>MwSt (8.1%):</span><span>CHF ${fmt(taxTotal)}</span></div>
     <div class="t-grand"><span>Gesamtbetrag (CHF):</span><span>CHF ${fmt(total)}</span></div>
   </div>
   ${doc.notes ? `<div class="notes"><b>Bemerkungen</b>${doc.notes}</div>` : ''}
   <div class="footer">
     HED-IT Joel Hediger · Web & Marketing Solutions<br>
     info@hed-it.ch · www.hed-it.ch<br>
-    ${doc.type === 'invoice' ? 'IBAN: CH00 0000 0000 0000 0000 0 · Zahlbar netto innert 30 Tagen · Gerichtsstand: Schweiz' : 'Alle Preise in CHF · Preise inkl. MwSt (8.1%) · Gerichtsstand: Schweiz'}
+    ${doc.type === 'invoice' ? 'IBAN: CH00 0000 0000 0000 0000 0 · Zahlbar netto innert 30 Tagen · Gerichtsstand: Schweiz' : 'Alle Preise in CHF · Nicht MWST-pflichtig · Gerichtsstand: Schweiz'}
   </div>
   <script>window.onload=()=>setTimeout(()=>window.print(),400)</script>
 </body></html>`);
@@ -268,9 +262,6 @@ export const PortalDocumentPreview = ({ doc, onClose }: Props) => {
                   <span>Rabatt ({discountPct}%):</span><span>−CHF {fmt(discountAmt)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13, color: '#64748b' }}>
-                <span>MwSt (8.1%):</span><span>CHF {fmt(taxTotal)}</span>
-              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0 0', marginTop: 8, borderTop: '2px solid #0f172a', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
                 <span>Gesamtbetrag:</span>
                 <span style={{ color: '#0891b2' }}>CHF {fmt(total)}</span>
@@ -290,7 +281,7 @@ export const PortalDocumentPreview = ({ doc, onClose }: Props) => {
               info@hed-it.ch · www.hed-it.ch<br />
               {doc.type === 'invoice'
                 ? 'IBAN: CH00 0000 0000 0000 0000 0 · Zahlbar netto innert 30 Tagen · Gerichtsstand: Schweiz'
-                : 'Alle Preise in CHF · Preise inkl. MwSt (8.1%) · Gerichtsstand: Schweiz'}
+                : 'Alle Preise in CHF · Nicht MWST-pflichtig · Gerichtsstand: Schweiz'}
             </div>
           </div>
         </div>

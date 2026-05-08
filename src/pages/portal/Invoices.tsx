@@ -47,8 +47,8 @@ const Invoices = () => {
       company_name: invAny.company_name,
       status: inv.status,
       total: amt,
-      subtotal: parseFloat((amt / 1.081).toFixed(2)),
-      tax_total: parseFloat((amt - amt / 1.081).toFixed(2)),
+      subtotal: amt,
+      tax_total: 0,
       items,
       created_at: inv.created_at,
       due_date: inv.due_date,
@@ -134,13 +134,8 @@ const Invoices = () => {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text('Zwischensumme', 26, y + 24);
-      doc.text('MwSt (8.1%)', 26, y + 30);
       const amount = parseFloat(String(inv.amount || 0));
-      const tax = amount * 0.081;
       doc.setTextColor(30, 41, 59);
-      doc.text(`CHF ${(amount - tax).toFixed(2)}`, W - 26, y + 24, { align: 'right' });
-      doc.text(`CHF ${tax.toFixed(2)}`, W - 26, y + 30, { align: 'right' });
 
       y += 44;
       doc.setFillColor(30, 41, 59);

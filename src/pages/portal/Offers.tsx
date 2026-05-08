@@ -295,12 +295,6 @@ export default function Offers() {
 
                   {/* Total */}
                   <div style={{ background: 'rgba(0,242,255,0.06)', border: '1px solid rgba(0,242,255,0.15)', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>
-                      <span>Zwischensumme</span><span>CHF {parseFloat(String(selected.subtotal || 0)).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-                      <span>MwSt (8.1%)</span><span>CHF {parseFloat(String(selected.tax_total || 0)).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</span>
-                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900 }}>
                       <span style={{ fontSize: 16 }}>Gesamtbetrag</span>
                       <span style={{ fontSize: 22, color: 'var(--primary)' }}>CHF {parseFloat(String(selected.total || 0)).toLocaleString('de-CH', { minimumFractionDigits: 2 })}</span>

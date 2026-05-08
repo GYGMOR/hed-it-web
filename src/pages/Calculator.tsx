@@ -291,7 +291,7 @@ const Calculator = () => {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(71, 85, 105);
     doc.text('Was hier steht, gilt. Keine versteckten Stunden, keine Nachforderungen.', 26, y + 13);
-    doc.text('Alle Preise inkl. MwSt (8.1%). Erstgespräch immer kostenlos.', 26, y + 18);
+    doc.text('Nicht MWST-pflichtig. Erstgespräch immer kostenlos.', 26, y + 18);
 
     // ── Footer bar ───────────────────────────────────────────────
     doc.setFillColor(15, 23, 42);

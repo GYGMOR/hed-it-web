@@ -21,7 +21,7 @@ const Contact = () => {
               <div className="glass-card" style={{ padding: '48px' }}>
                 <h2 style={{ marginBottom: '32px' }}>Schreiben Sie uns</h2>
                 <form className="flex flex-col gap-6">
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                  <div className="contact-name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                     <div className="flex flex-col gap-2">
                       <label style={{ fontSize: '12px', color: '#666' }}>VORNAME</label>
                       <input type="text" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', padding: '16px', borderRadius: '12px', color: 'white' }} />

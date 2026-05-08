@@ -239,7 +239,7 @@ const Home = () => {
       {/* ── Stats Counter ── */}
       <section style={{ background: 'var(--bg-main)', borderBottom: '1px solid var(--border)' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0 }}>
+          <div className="home-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0 }}>
             <Stat target={25} suffix="+" label="Projekte abgeschlossen" color="var(--primary)" />
             <Stat target={100} suffix="%" label="Kundenzufriedenheit" color="var(--secondary)" />
             <Stat target={24} suffix="/7" label="Support & Monitoring" color="#00ff88" />
@@ -258,7 +258,7 @@ const Home = () => {
             </div>
             <Link to="/services" className="nav-link" style={{ fontWeight: 'bold' }}>Alle Dienstleistungen →</Link>
           </div>
-          <div className="items-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
+          <div className="items-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
             {competence.map((c, i) => (
               <motion.div key={i} className="calc-item" style={{ padding: 48, borderBottom: `4px solid ${c.color}` }} whileHover={{ translateY: -10 }}>
                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32 }}>{c.icon}</div>

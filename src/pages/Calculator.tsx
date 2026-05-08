@@ -313,7 +313,7 @@ const Calculator = () => {
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 960px) {
           .calc-two-col { grid-template-columns: 1fr !important; }
-          .calc-sticky { position: relative !important; top: 0 !important; }
+          .calc-sticky { position: static !important; top: 0 !important; order: -1; }
         }
         @media (max-width: 600px) {
           .extras-grid { grid-template-columns: 1fr !important; }

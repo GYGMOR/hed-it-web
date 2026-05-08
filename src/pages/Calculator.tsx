@@ -166,9 +166,17 @@ const Calculator = () => {
     .notes{padding:16px;background:#f8fafc;border-radius:8px;font-size:13px;color:#475569;margin-bottom:32px}
     .notes b{color:#1e293b;display:block;margin-bottom:6px}
     .footer{padding-top:20px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center;line-height:1.8;margin-top:60px}
-    @media print{body{padding:20px 30px}}
+    .print-bar{position:fixed;top:0;left:0;right:0;background:#0f172a;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;z-index:999}
+    .print-bar span{color:#94a3b8;font-size:13px}
+    .print-btn{background:#06b6d4;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer}
+    body{padding-top:56px}
+    @media print{.print-bar{display:none}body{padding-top:0;padding:20px 30px}}
   </style>
 </head><body>
+  <div class="print-bar">
+    <span>OFFERTE ${ref} · ${today.toLocaleDateString('de-CH')}</span>
+    <button class="print-btn" onclick="window.print()">&#128438; Als PDF speichern / Drucken</button>
+  </div>
   <div class="header">
     <div>
       <div class="logo">HED<span>-IT</span></div>
@@ -218,7 +226,6 @@ const Calculator = () => {
     info@hed-it.ch · www.hed-it.ch · +41 41 562 34 16<br>
     Alle Preise in CHF · Festpreisgarantie · Gerichtsstand: Schweiz
   </div>
-  <script>window.onload=()=>setTimeout(()=>window.print(),400)</script>
 </body></html>`);
     pw.document.close();
   };

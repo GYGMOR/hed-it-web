@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, User, ChevronDown, Menu, X, Calculator, MessageSquare, Phone } from 'lucide-react';
+import { Sun, Moon, User, ChevronDown, Menu, X, Calculator, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logoLight from '../assets/logos/logo-light.png';
+import logoDark from '../assets/logos/logo-dark.png';
 
 interface NavbarProps {
   theme: 'dark' | 'light';
@@ -32,9 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const logoSrc = theme === 'light'
-    ? '/bilder/hedit_logo_1_transparent.png'
-    : '/bilder/hedit_logo_2_transparent.png';
+  const logoSrc = theme === 'light' ? logoLight : logoDark;
 
   return (
     <>

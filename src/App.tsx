@@ -9,7 +9,9 @@ import Services from './pages/Services';
 import Support from './pages/Support';
 import References from './pages/References';
 import Contact from './pages/Contact';
-import Legal from './pages/Legal';
+import Impressum from './pages/Impressum';
+import Datenschutz from './pages/Datenschutz';
+import AGB from './pages/AGB';
 import Configurator from './pages/Configurator';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -70,12 +72,12 @@ const MainContent = ({ theme, toggleTheme }: { theme: 'dark' | 'light', toggleTh
           <Route path="/references" element={<References />} />
           <Route path="/support" element={<Support />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/impressum" element={<Legal title="Impressum" />} />
-          <Route path="/privacy" element={<Legal title="Datenschutz" />} />
-          <Route path="/agb" element={<Legal title="AGB" />} />
+          <Route path="/impressum" element={<Impressum />} />
+          <Route path="/privacy" element={<Datenschutz />} />
+          <Route path="/agb" element={<AGB />} />
         </Routes>
       </main>
-      {!isPortal && <Footer />}
+      {!isPortal && <Footer theme={theme} />}
     </div>
   );
 };
